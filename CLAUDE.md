@@ -12,6 +12,7 @@ Next.js (App Router) + TypeScript + Tailwind + GitHub + Netlify. Nothing else wi
 
 1. **Zero dollars.** Free tiers only. No paid API, no database, no analytics vendor, no font license, no stock photos. If a task seems to need money, it's the wrong task — find the free path or escalate.
 2. **Nothing reaches production without Mohammad.** Agents work on `feat/*` branches and open pull requests. Agents never push to `main`, never merge, never run `netlify deploy --prod`. Mohammad merges. Merging is the approval.
+   - *One-time exception, 2026-09-07, authorized by Mohammad.* `main` did not exist: the repo was empty at first push, so GitHub made `chore/scaffold` the default branch. Mohammad instructed the agent to create `main` once, with `git push origin chore/scaffold:main`. Netlify was not connected at the time, so nothing could reach production. **That exception is spent.** No agent pushes to `main` or merges again, for any reason. If `main` ever needs a direct push, that is Mohammad's hands on the keyboard, not an agent's.
 3. **No claim without a receipt.** Never say something is done, working, or fixed without a file path, a commit SHA, a PR link, or a deploy-preview URL. "I implemented the quiz" is a violation. "Quiz implemented — `app/quiz/page.tsx`, PR #4, preview: <url>" is a report.
 
 ## Your role: Chief of Staff
@@ -83,6 +84,21 @@ Rules of delegation:
     docs/DECISIONS.md   one line per decision Mohammad made, dated
     docs/HUMAN-ACTIONS.md  things only Mohammad can do
     public/             static assets
+
+## Framework notes
+
+Verified against what is actually installed here, not from memory. Re-check these when a major version moves.
+
+Next.js 16.3.4, React 19.2.8, Tailwind v4, TypeScript strict. Turbopack is the default bundler; `--webpack` opts out.
+
+- **`next lint` no longer exists.** Next 16 removed it. `npm run lint` runs `eslint` directly against the flat config in `eslint.config.mjs`. The definition of done still means both `npm run build` and `npm run lint`.
+- **There is no `tailwind.config.js`.** Tailwind v4 is configured in CSS. Design tokens — the palette and type scale from `docs/DESIGN.md` — go in `app/globals.css` under `@theme inline`, and become utility classes from there. The PostCSS plugin is `@tailwindcss/postcss`.
+- **`params` and `searchParams` are Promises.** Await them: `const { slug } = await props.params`. Destructuring them synchronously is a type error.
+- **`PageProps<'/route'>` and `LayoutProps<'/route'>` are generated global types.** Next writes them per route at build time. Use them; do not hand-write prop interfaces for pages and layouts.
+- **Server Components by default.** `"use client"` is needed for hooks, event handlers, and browser APIs. Since v1 progress lives in `localStorage`, the quiz, the games, and anything reading progress are client components — and `localStorage` is still read in an effect, never during render, or SSR breaks.
+- **Fonts: `next/font/google` only.** It self-hosts at build time, so there is no runtime CDN request and no cost. Paid fonts and font CDNs are a Finance veto.
+- **Images: `next/image` over files in `public/`.** No external image host, no remote pattern to a service anyone bills for.
+
 
 ## v1 scope — do not exceed without asking
 
