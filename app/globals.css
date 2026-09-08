@@ -1,26 +1,276 @@
 @import "tailwindcss";
 
+/* ============================================================================
+   3alemny design tokens. Source of truth: docs/DESIGN.md.
+
+   Three layers (§2.1). Components only ever touch layer 3 — the Tailwind theme.
+     1. Raw ramp        --n-*, --acid-*      literal values, never referenced by a component
+     2. Semantic        --surface, --ink, …  points at layer 1
+     3. Tailwind theme  --color-*            @theme inline, generates the utilities
+
+   A light theme in v2 re-points layer 2 under one selector and touches nothing
+   else. Never add a literal-named colour token.
+   ==========================================================================*/
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* -- Layer 1: raw neutral ramp (§2.2) ----------------------------------- */
+  --n-950: #050506;
+  --n-900: #0b0c0e;
+  --n-850: #131417;
+  --n-800: #1c1e22;
+  --n-700: #2a2c31;
+  --n-600: #3c4046;
+  --n-500: #6b7078;
+  --n-400: #8a9099;
+  --n-300: #9aa1ab;
+  --n-100: #e8eaed;
+
+  /* -- Layer 1: raw acid ramp (§2.3). One hue. There is no second hue. ----- */
+  --acid-500: #ccff00;
+  --acid-600: #a3cc00;
+  --acid-800: #3d4d00;
+  --acid-900: #1a2000;
+
+  /* -- Layer 2: semantic assignment (§2.4). Sixteen tokens, named by role. - */
+  --surface: var(--n-900);
+  --surface-raised: var(--n-850);
+  --surface-hover: var(--n-800);
+  --surface-sunken: var(--n-950);
+  --ink: var(--n-100);
+  --ink-muted: var(--n-400);
+  --ink-inverse: var(--n-900);
+  --line: var(--n-500);
+  --line-strong: var(--n-300);
+  --line-soft: var(--n-700);
+  --hatch: var(--n-600);
+  --acid: var(--acid-500);
+  --acid-dim: var(--acid-600);
+  --acid-deep: var(--acid-800);
+  --acid-wash: var(--acid-900);
+  --focus: var(--n-100);
+
+  /* -- The one focus ring (§2.6) ------------------------------------------
+     Declared here, not in @theme: it is a shadow value, not a colour. Inner
+     2px dark stroke, outer 2px light stroke, zero offset and zero blur, so it
+     is geometrically a ring and never enters the element or crosses a child.
+     The two strokes are 16.2:1 against each other, so the indicator contrasts
+     with itself regardless of what it sits on. This is the only box-shadow
+     permitted anywhere in the codebase (§6).                                */
+  --focus-ring: 0 0 0 2px var(--color-ink-inverse), 0 0 0 4px var(--color-focus);
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
+/* ============================================================================
+   Theme, part 1 — guard rails (§2.8) and every token whose value is a literal.
+   ==========================================================================*/
+@theme {
+  /* Clear the namespaces that let old habits back in. These are load-bearing:
+     they are why bg-purple-600, rounded-lg, shadow-md and text-xl stop
+     compiling at all rather than merely being discouraged. */
+  --color-*: initial;
+  --radius-*: initial;
+  --shadow-*: initial;
+  --inset-shadow-*: initial;
+  --drop-shadow-*: initial;
+  --text-shadow-*: initial;
+  --text-*: initial;
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+  /* -- Type scale (§3.3). Twelve steps, no others. -------------------------
+     The Family column of §3.3 is bound in @layer components below, because
+     Tailwind v4 has no --text-*--font-family modifier.                      */
+  --text-d1: clamp(2.75rem, 8vw, 6rem);
+  --text-d1--line-height: 0.92;
+  --text-d1--letter-spacing: -0.03em;
+  --text-d1--font-weight: 400;
+
+  --text-d2: clamp(2.125rem, 5.5vw, 4rem);
+  --text-d2--line-height: 0.95;
+  --text-d2--letter-spacing: -0.02em;
+  --text-d2--font-weight: 400;
+
+  --text-d3: clamp(1.75rem, 3.5vw, 2.5rem);
+  --text-d3--line-height: 1;
+  --text-d3--letter-spacing: -0.01em;
+  --text-d3--font-weight: 400;
+
+  --text-h1: 2rem;
+  --text-h1--line-height: 1.15;
+  --text-h1--letter-spacing: -0.01em;
+  --text-h1--font-weight: 700;
+
+  --text-h2: 1.5rem;
+  --text-h2--line-height: 1.25;
+  --text-h2--letter-spacing: 0em;
+  --text-h2--font-weight: 700;
+
+  --text-h3: 1.1875rem;
+  --text-h3--line-height: 1.35;
+  --text-h3--letter-spacing: 0em;
+  --text-h3--font-weight: 700;
+
+  --text-lede: 1.1875rem;
+  --text-lede--line-height: 1.6;
+  --text-lede--letter-spacing: 0em;
+  --text-lede--font-weight: 400;
+
+  --text-body: 1.0625rem;
+  --text-body--line-height: 1.65;
+  --text-body--letter-spacing: 0em;
+  --text-body--font-weight: 400;
+
+  /* Deliberate override of Tailwind's default text-sm (0.875rem/1.25). The
+     namespace clear above makes it explicit rather than silent (§2.8). */
+  --text-sm: 0.9375rem;
+  --text-sm--line-height: 1.6;
+  --text-sm--letter-spacing: 0em;
+  --text-sm--font-weight: 400;
+
+  --text-code: 0.9375rem;
+  --text-code--line-height: 1.5;
+  --text-code--letter-spacing: 0em;
+  --text-code--font-weight: 400;
+
+  --text-label: 0.8125rem;
+  --text-label--line-height: 1.2;
+  --text-label--letter-spacing: 0.12em;
+  --text-label--font-weight: 700;
+
+  --text-micro: 0.6875rem;
+  --text-micro--line-height: 1.3;
+  --text-micro--letter-spacing: 0.16em;
+  --text-micro--font-weight: 500;
+
+  /* -- Motion (§8). Durations use Tailwind's numeric duration-<ms>; there is
+     no --duration-* namespace in v4, so none is invented here. ------------ */
+  --ease-hard: cubic-bezier(0.2, 0, 0.2, 1);
+
+  /* The two infinite animations §8 permits, and nothing else. */
+  --animate-caret: caret 1000ms steps(2, start) infinite;
+  --animate-ticker: ticker 40s linear infinite;
+
+  /* Hard 50/50 stops rather than a 1 → 0 pair: with a two-stop interpolation
+     steps(2, start) lands on 0.5 opacity for half the cycle, which is a fade,
+     not a terminal blink. */
+  @keyframes caret {
+    0%,
+    50% {
+      opacity: 1;
+    }
+    50.01%,
+    100% {
+      opacity: 0;
+    }
+  }
+
+  /* The track renders the term list twice, so one lap is exactly -50%. */
+  @keyframes ticker {
+    from {
+      transform: translateX(0);
+    }
+    to {
+      transform: translateX(-50%);
+    }
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* ============================================================================
+   Theme, part 2 — every token whose value is a var() reference (§2.1 layer 3).
+   `inline` is what makes bg-surface compile to background-color: var(--surface),
+   so re-pointing layer 2 re-themes every component with no class changes.
+   ==========================================================================*/
+@theme inline {
+  --color-surface: var(--surface);
+  --color-surface-raised: var(--surface-raised);
+  --color-surface-hover: var(--surface-hover);
+  --color-surface-sunken: var(--surface-sunken);
+  --color-ink: var(--ink);
+  --color-ink-muted: var(--ink-muted);
+  --color-ink-inverse: var(--ink-inverse);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --color-line-soft: var(--line-soft);
+  --color-hatch: var(--hatch);
+  --color-acid: var(--acid);
+  --color-acid-dim: var(--acid-dim);
+  --color-acid-deep: var(--acid-deep);
+  --color-acid-wash: var(--acid-wash);
+  --color-focus: var(--focus);
+
+  /* Re-declared after the namespace clear so border-transparent and
+     text-current still exist (§2.4). */
+  --color-transparent: transparent;
+  --color-current: currentColor;
+
+  /* -- Families (§3.1) -----------------------------------------------------
+     next/font emits --font-jetbrains and --font-archivo on <html>; these keys
+     map them onto the Tailwind theme. The two layers stay separate on purpose:
+     --font-mono: var(--font-mono) would be circular and resolve to nothing. */
+  --font-mono: var(--font-jetbrains), ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --font-display: var(--font-archivo), Impact, "Haettenschweiler", sans-serif;
+
+  /* font-sans is a no-op alias and must not appear in any component; it exists
+     only so Preflight cannot fall back to a system sans (§2.8). */
+  --font-sans: var(--font-mono);
+  --default-font-family: var(--font-mono);
+  --default-mono-font-family: var(--font-mono);
+}
+
+@layer base {
+  /* §5 — catches anything a raw CSS rule tries to round. */
+  *,
+  *::before,
+  *::after {
+    border-radius: 0;
+  }
+
+  /* §2.8 — 16.7:1 */
+  ::selection {
+    background: var(--color-acid);
+    color: var(--color-ink-inverse);
+  }
+
+  /* §2.6, applied once and mechanically. No component overrides it and no
+     component needs a focus class. :where() keeps specificity at zero.
+     The transparent outline is not decoration: forced-colors mode discards
+     box-shadow and repaints outline in the system highlight colour, so
+     without it focus vanishes entirely in that mode. */
+  :where(a, button, summary, input, select, textarea, [tabindex]):focus-visible {
+    outline: 2px solid transparent;
+    outline-offset: 2px;
+    box-shadow: var(--focus-ring);
+  }
+
+  /* §8. The per-animation substitutions the global rule cannot express
+     (ticker does not translate at all, caret renders solid) are applied at
+     their call sites with motion-reduce: utilities. */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 1ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 1ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+@layer components {
+  /* The two bindings the type scale cannot carry itself.
+
+     1. §3.3: there is no --text-*--font-family modifier in Tailwind v4, so the
+        three display steps would otherwise render at display sizes in the mono
+        face whenever someone forgot `font-display`. §3.3 explicitly sanctions
+        binding it here instead of leaving it to memory. */
+  .text-d1,
+  .text-d2,
+  .text-d3 {
+    font-family: var(--font-display);
+  }
+
+  /*  2. §3.3: uppercase is applied by the step for these two, and there is no
+        --text-*--text-transform modifier either. */
+  .text-label,
+  .text-micro {
+    text-transform: uppercase;
+  }
 }
