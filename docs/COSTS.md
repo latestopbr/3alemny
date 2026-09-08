@@ -39,9 +39,21 @@ happens.
 builds and production builds draw from the same 300 minutes/month. Amending and force-pushing a branch
 triggers a build too.
 
-A Next.js 16 build here includes `npm install` plus `next build`. Estimate **~2 minutes per build** until we
-have a measured number — replace this figure with the real duration from the first preview build in the
-Netlify deploy log, and re-derive the rows below.
+A Next.js 16 build here includes `npm install` plus `next build`. **The real Netlify build duration is still
+not measured** — the deploy log lives behind a dashboard login this role cannot open. What *is* measured, on
+this machine and from the GitHub check-run timestamps of PR #1:
+
+| Step | Measured | How |
+|---|---|---|
+| `npm ci` from a warm cache | **25s** | timed locally, 371 packages |
+| `next build` (Turbopack, cold, no `.next`) | **13s** | timed locally on the `feat/homepage` tree |
+| Local subtotal | **~38s** | |
+| Netlify post-processing (header/redirect/page checks) | **30s** | PR #1 check runs, `17:19:58Z -> 17:20:28Z` |
+
+Netlify's builders also add repo checkout, cache restore, and image/asset post-processing on top, and run on
+slower shared hardware than this machine. **`~2 minutes per build` stays as the planning figure** — it is a
+conservative envelope around a measured ~38s of real work, not a guess pulled from nothing. Replace it with
+the true figure the first time Mohammad can read `Deploy log -> build time` in the Netlify dashboard.
 
 | Behaviour | Builds/month | Minutes | Share of 300 |
 |---|---|---|---|
@@ -63,6 +75,27 @@ Rules that keep us under it:
 (125,000/month free). v1 keeps progress in `localStorage` with no backend, so pages should be static or
 statically rendered. If a route goes dynamic, it starts drawing on that budget — flag it in review.
 
+**Status as of 2026-09-08 (`feat/homepage`): zero serverless surface.** Verified against build artifacts, not
+against the build summary text:
+
+- `.next/prerender-manifest.json` — every route reports `"compute": "static"` and `initialRevalidateSeconds:
+  false`: `/`, `/_not-found`, `/_global-error`, `/favicon.ico`. `dynamicRoutes` is empty.
+- `.next/server/middleware-manifest.json` — `{"middleware": {}, "functions": {}}`.
+- `.next/server/functions-config-manifest.json` — `{"functions": {}}`.
+- `.next/server/server-reference-manifest.json` — no server actions, node or edge.
+- Source contains no `cookies()`, `headers()`, `draftMode`, `noStore()`, `connection()`, `export const
+  dynamic`, `export const revalidate`, `export const runtime`, no `middleware.ts`, no `route.ts`, no `"use
+  server"`, and no `fetch()` of any kind.
+
+**Invocations consumed by v1 as it stands: 0 of 125,000.** Re-run this check on any diff that adds a route.
+
+### Bandwidth, measured
+
+One cold homepage visit transfers **~234 KB** (gzipped HTML + CSS + JS chunks, plus the two preloaded `woff2`
+subsets, which are already compressed). Against 100 GB/month that is roughly **450,000 cold visits/month**
+before the free tier is a concern, and repeat visits cost far less because the hashed assets cache. Bandwidth
+is not a live risk; build minutes remain the only limit reachable by accident.
+
 ---
 
 ## Licensed assets
@@ -79,7 +112,18 @@ Both families are confirmed present in the Google Fonts catalogue bundled with t
 families from that catalogue, and every family in it is open-source licensed. **A font that cannot be
 imported from `next/font/google` is a font we cannot afford** until Finance says otherwise.
 
-Images and icons: none licensed, none purchased. `public/og.png` and `public/icon.svg` are drawn by us.
+**Verified at the artifact level on 2026-09-08**, after `app/layout.tsx` began loading both families: the
+build emits **8 self-hosted `woff2` files (112 KB total) into `.next/static/media/`**, and the prerendered
+HTML and emitted CSS contain **zero external hosts** — no `fonts.googleapis.com`, no `fonts.gstatic.com`, no
+`@import url(...)`, no `<link rel=preconnect>`, no `@font-face` pointing off-origin. The only `@import` in
+`app/globals.css` is `@import "tailwindcss"`, which resolves to the local package. No font binary is
+committed to the repo (`git ls-files` matches no `.woff/.woff2/.ttf/.otf/.eot`).
+
+Images and icons: none licensed, none purchased. `public/og.png` and `public/icon.svg` are drawn by us —
+**neither exists yet**; as of 2026-09-08 `public/` holds only the five unused SVGs from the `create-next-app`
+scaffold (`file`, `globe`, `next`, `vercel`, `window`; ~3 KB total, referenced by nothing). They cost
+nothing, but they are dead weight and should be deleted when real assets land.
+
 Icons are ASCII or basic Unicode glyphs already in the mono face — no icon library, free or otherwise.
 Optional texture assets are **text prompts** Mohammad may run in a tool he already has; the output is saved
 to `public/` as a local file. No image service is added to the project to produce them.
@@ -103,8 +147,11 @@ and do not make any build or content step depend on a Figma file, without a Fina
 
 | Date | Question | Status |
 |---|---|---|
-| 2026-09-07 | `https://3alemnyai.netlify.app` returns **HTTP 401** and redirects to Netlify's `app.netlify.com/edge-access` login gate, so the production URL is not publicly reachable. Some site access control is enabled. Netlify's password protection and SSO site protection are **paid (Pro) features**; a team-members-only visibility setting is free. Needs Mohammad to confirm which, since a paid feature or an active trial would break the zero-dollar rule — and any gate that also covers deploy previews makes preview URLs unusable as receipts | **Open — needs Mohammad** |
+| 2026-09-07 | `https://3alemnyai.netlify.app` returns **HTTP 401** and redirects to Netlify's `app.netlify.com/edge-access` login gate, so the production URL is not publicly reachable. Some site access control is enabled. Netlify's password protection and SSO site protection are **paid (Pro) features**; a team-members-only visibility setting is free. Needs Mohammad to confirm which, since a paid feature or an active trial would break the zero-dollar rule — and any gate that also covers deploy previews makes preview URLs unusable as receipts | **Open — needs Mohammad.** Escalated 2026-09-08, see below |
+| 2026-09-08 | **The gate covers deploy previews too — confirmed, not suspected.** `https://deploy-preview-1--3alemnyai.netlify.app` (the preview for merged PR #1) also returns **HTTP 401** with the same `app.netlify.com/edge-access?...&site_id=d4c798ee-0dcd-4f28-954a-c372cfa3539f` redirect. The response is a *login redirect*, not a password form, which points at team-member/SSO access control rather than basic password protection. Two consequences: **(1) cost** — if this is Pro-only SSO or an active trial, it breaks the zero-dollar rule; if it is the free team-members-only visibility setting, it is fine. **(2) process** — the definition of done requires a deploy-preview URL as a receipt, and a 401 URL is not a receipt to anyone outside the Netlify team. Every PR from here on inherits this | **Open — blocks the preview-URL receipt** |
 
 ---
 
-*Last audited 2026-09-07 by `head-of-finance`, on branch `feat/design-system`.*
+*Last audited 2026-09-08 by `head-of-finance`, on branch `feat/homepage` (3 commits, 11 files, first
+application code). Dependencies unchanged — `package.json` and `package-lock.json` are byte-identical to
+`origin/main`. No new service, no external request, no secret, no serverless route.*
