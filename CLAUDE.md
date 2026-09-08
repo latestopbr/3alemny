@@ -104,7 +104,7 @@ Next.js 16.3.4, React 19.2.8, Tailwind v4, TypeScript strict. Turbopack is the d
 
 Homepage. Placement quiz. 8 core lessons. 10 slang lessons. 3 games. 1 graph page.
 
-Core: tokens, APIs, agents, MCP, n8n, Claude, Grok, + one more (ask Mohammad).
+Core: tokens, APIs, agents, MCP, n8n, Claude, Grok, context window.
 Slang: slop, vibe coding, clanker, glazing, brainrot, context rot, GPT-ese, wrapper, hallucinating, skills.
 
 Out of scope for v1: accounts, login, a database, a backend, i18n, a CMS, payments, email. User progress lives in `localStorage`. If a feature needs a server, it's v2.
