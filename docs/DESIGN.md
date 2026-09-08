@@ -109,13 +109,13 @@ One hue (~72°, chartreuse). Four steps. **There is no second hue anywhere in th
 | `--color-ink-inverse` | `#0B0C0E` | Text on any light fill (acid or ink). |
 | `--color-line` | `#6B7078` | Default border. Every interactive boundary. |
 | `--color-line-strong` | `#9AA1AB` | Hover / emphasis border. |
-| `--color-line-soft` | `#2A2C31` | Decorative rules between text blocks only. Never a component boundary. |
+| `--color-line-soft` | `#2A2C31` | Decorative rules between text blocks, **and** the boundary of controls that are disabled or inert. Never the boundary of an *enabled* control. |
 | `--color-hatch` | `#3C4046` | Locked-state hatch stripe. Decorative. |
 | `--color-acid` | `#CCFF00` | The accent. |
 | `--color-acid-dim` | `#A3CC00` | Visited links, pressed acid fills. |
 | `--color-acid-deep` | `#3D4D00` | Selected fill, done chip. |
 | `--color-acid-wash` | `#1A2000` | Hover wash, inline code chip fill. |
-| `--color-focus` | `#E8EAED` | Focus ring. Always this. See §2.7. |
+| `--color-focus` | `#E8EAED` | Focus ring on dark surfaces — which is nearly everywhere. On a light fill (`--color-acid` or `--color-ink`) an inset ring flips to `--color-ink-inverse` instead. See §2.6. |
 
 Sixteen colour tokens. If you need a seventeenth, the design is wrong — raise it with `head-of-design`.
 
@@ -150,6 +150,7 @@ before merge and send back anything that misses. Where a pair sits close to a th
 | `--color-acid` | `--color-acid-deep` | **7.9** | AAA |
 | `--color-acid-dim` `#A3CC00` | `--color-surface` | **10.4** | AAA |
 | `--color-acid-dim` | `--color-surface-raised` | **9.8** | AAA |
+| `--color-acid-dim` | `--color-acid-wash` `#1A2000` | **9.0** | AAA — added for §7.6 link active + visited code chip |
 | `--color-ink-inverse` `#0B0C0E` | `--color-acid` `#CCFF00` | **16.7** | AAA |
 | `--color-ink-inverse` | `--color-acid-dim` `#A3CC00` | **10.4** | AAA |
 | `--color-ink-inverse` | `--color-ink` `#E8EAED` | **16.2** | AAA |
@@ -172,7 +173,7 @@ before merge and send back anything that misses. Where a pair sits close to a th
 
 | Pair | Ratio | Why it is allowed |
 |---|---|---|
-| `--color-line-soft` `#2A2C31` on `--color-surface` | 1.4 | Decorative rule between text blocks. Carries no state. Never used as a control boundary. |
+| `--color-line-soft` `#2A2C31` on `--color-surface` | 1.4 | Two sanctioned uses, both exempt from 1.4.11. **(a)** Decorative rules between text blocks — carries no state. **(b)** The border of a control that is disabled or inert: disabled buttons (§7.3), disabled inputs (§7.4), post-submit inert quiz options (§7.5 state 8). WCAG 1.4.11 exempts "inactive user interface components", and the recessive border is doing real work there — it is *how* the control reads as unavailable. It must never bound an enabled control; enabled boundaries use `--color-line` at 3.9 or better. |
 | `--color-hatch` `#3C4046` on `--color-surface` | 1.9 | Locked-state texture. Reinforcement only — locked is *also* signalled by a `[LOCKED]` chip, a `REQUIRES:` line, and `aria-disabled`. |
 | `--color-acid-deep` `#3D4D00` fill on `--color-surface` | 2.1 | A fill, not a boundary. Every element using it also carries a 2px `--color-acid` border at 16.7. |
 | `--color-line` `#6B7078` text on `--color-surface-raised` | 3.7 | Disabled control label. WCAG 1.4.3 exempts disabled controls. Applies to buttons and inputs only — **never** to locked lesson cards, whose text stays at `--color-ink-muted`. |
@@ -189,7 +190,7 @@ and **every state also carries a text label or an ASCII glyph**, so no state is 
 | **Wrong / error** | **Inversion.** Solid `--color-ink` `#E8EAED` fill, `--color-ink-inverse` text, 2px `--color-ink` border, `[X]` glyph cell, label `WRONG`, plus a 6px hazard-hatch bar flush to the bottom inner edge (45°, 3px `--color-surface` stripe / 3px transparent, over the ink fill). A white slab in a black page is louder than red, and it can never be confused with acid. |
 | **The answer you missed** | Outlined, not filled: `--color-surface` fill, 2px `--color-acid` border, `--color-acid` text, `>` glyph cell, label `ANSWER`. Distinguishable from "you got it right" because that one is filled. |
 | **Warning / caution** | `--color-acid-wash` fill, 1px `--color-acid-dim` border, `!!` prefix, `--color-ink` text. Low-energy acid. |
-| **Focus** | `outline: 2px solid var(--color-focus); outline-offset: 2px`. Always `#E8EAED`, on every surface including acid fills. Never acid — acid is reserved for meaning, and an acid ring on an acid button is invisible. Because of the 2px offset the ring sits on the page ground (16.2:1) even on an acid button. |
+| **Focus** | `outline: 2px solid; outline-offset: 2px`. Never acid — acid is reserved for meaning, and an acid ring on an acid button is invisible. **Ring colour follows the surface the ring lands on:** `--color-focus` `#E8EAED` on any dark surface, `--color-ink-inverse` `#0B0C0E` on a light fill (`--color-acid` or `--color-ink`). An *outward* ring (`+2px`) lands on the page ground, which is always dark, so buttons and cards always use `--color-focus` (16.2:1) even when the control itself is acid-filled. Only an *inset* ring (`-2px`, used in collapsed stacks — see §7.5) ever lands on the control's own fill, and that is the case that flips. |
 | **Selected (pre-commit)** | `--color-acid-deep` fill, 2px `--color-acid` border, acid-filled key glyph cell. |
 | **Visited link** | `--color-acid-dim` `#A3CC00` text (10.4:1) instead of `--color-acid`. Same hue, clearly dimmer. |
 | **Disabled control** | No `opacity`. Explicit token swap: fill `--color-surface-raised`, text `--color-line`, border 2px `--color-line-soft`, `cursor: not-allowed`, no hover transition. `opacity` is banned for disabled states because it makes contrast unpredictable. |
@@ -218,6 +219,14 @@ Inside `@theme`, clear the namespaces that let old habits back in:
 - `--radius-*: initial;` — removes every `rounded-*` utility.
 - `--shadow-*: initial;` `--inset-shadow-*: initial;` `--drop-shadow-*: initial;` `--text-shadow-*: initial;`
   — removes every shadow utility.
+- `--text-*: initial;` — removes Tailwind's default type scale, then declare the twelve steps from §3.3.
+  Without this, `text-xs`, `text-lg`, `text-xl`, `text-2xl` … all survive and the scale is not a scale.
+  Two things to know before doing it:
+  - **`text-sm` is a name collision.** Tailwind's default `text-sm` is `0.875rem`/`1.25`; this system's
+    `text-sm` is `0.9375rem`/`1.6`. Clearing the namespace first makes the override explicit rather than
+    silent — that is the point. Anyone reading `text-sm` in a component gets the value in §3.3.
+  - Clearing `--text-*` does **not** affect `--text-shadow-*`; they are separate namespaces. Both are
+    cleared here for different reasons.
 - `--font-sans:` set to the same stack as `--font-mono` (see §3), and set
   `--default-font-family: var(--font-mono)` so Preflight does not fall back to a system sans.
   `font-sans` therefore becomes a no-op alias and must not appear in any component.
@@ -236,8 +245,26 @@ request, no licence, no cost.
 
 | Role | Google Fonts family | `next/font/google` import | Config |
 |---|---|---|---|
-| Everything functional | **JetBrains Mono** | `JetBrains_Mono` | `{ variable: "--font-mono", subsets: ["latin"], display: "swap" }` — variable font, weights 100–800. **Do not pass `weight`.** |
-| Display only | **Archivo Black** | `Archivo_Black` | `{ variable: "--font-display", subsets: ["latin"], weight: "400", display: "swap" }` — static, single weight. **`weight: "400"` is required** or the import throws. |
+| Everything functional | **JetBrains Mono** | `JetBrains_Mono` | `{ variable: "--font-jetbrains", subsets: ["latin"], display: "swap" }` — variable font, weights 100–800. **Do not pass `weight`.** |
+| Display only | **Archivo Black** | `Archivo_Black` | `{ variable: "--font-archivo", subsets: ["latin"], weight: "400", display: "swap" }` — static, single weight. **`weight: "400"` is required** or the import throws. |
+
+**The `variable:` names above are deliberately not `--font-mono` / `--font-display`.** Those two names are
+Tailwind theme keys. If `next/font` is told to emit `--font-mono` and `@theme inline` then declares
+`--font-mono: var(--font-mono)`, the declaration is circular and resolves to nothing. Keep the two layers
+separate: `next/font` emits `--font-jetbrains` and `--font-archivo` on the `<html>` element, and
+`@theme inline` maps them onto the Tailwind keys:
+
+```
+@theme inline {
+  --font-mono: var(--font-jetbrains), ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --font-display: var(--font-archivo), Impact, "Haettenschweiler", sans-serif;
+  --font-sans: var(--font-mono);
+  --default-font-family: var(--font-mono);
+  --default-mono-font-family: var(--font-mono);
+}
+```
+
+That produces the `font-mono` and `font-display` utilities and makes mono the document default.
 
 Engineering notes:
 
@@ -278,7 +305,7 @@ Tailwind v4 token form — declare each step with its paired modifiers:
 |---|---|---|---|---|---|---|
 | `text-d1` | `clamp(2.75rem, 8vw, 6rem)` — 44→96px | 0.92 | 400 | `-0.03em` | display | Homepage H1. Quiz score number. Nothing else. |
 | `text-d2` | `clamp(2.125rem, 5.5vw, 4rem)` — 34→64px | 0.95 | 400 | `-0.02em` | display | Lesson page title. Results headline. Section slabs. |
-| `text-d3` | `clamp(1.75rem, 3.5vw, 2.5rem)` — 28→40px | 1.00 | 400 | `-0.01em` | display | Lattice cell headers. Game titles. Step numerals. |
+| `text-d3` | `clamp(1.75rem, 3.5vw, 2.5rem)` — 28→40px | 1.00 | 400 | `-0.01em` | display | Lattice cell headers. Game titles wherever a game is *presented* — the homepage games band and the game page. Step numerals. Overlay headlines. |
 | `text-h1` | `2rem` — 32px | 1.15 | 700 | `-0.01em` | mono | Sub-page headings where display is too loud. |
 | `text-h2` | `1.5rem` — 24px | 1.25 | 700 | `0` | mono | Lesson section headings. **Quiz question stem.** |
 | `text-h3` | `1.1875rem` — 19px | 1.35 | 700 | `0` | mono | Card titles. Sub-headings. |
@@ -289,12 +316,32 @@ Tailwind v4 token form — declare each step with its paired modifiers:
 | `text-label` | `0.8125rem` — 13px | 1.20 | 700 | `+0.12em`, uppercase | mono | Buttons, chips, eyebrows, nav, track tags. |
 | `text-micro` | `0.6875rem` — 11px | 1.30 | 500 | `+0.16em`, uppercase | mono | Meta rows, graph labels, keyboard hints, breadcrumbs. |
 
+**How the Family column is applied.** Tailwind v4 has `--text-*--line-height`,
+`--text-*--letter-spacing` and `--text-*--font-weight` modifiers, but there is **no
+`--text-*--font-family` modifier**. A `text-*` utility can therefore never set the typeface. The Family
+column is a binding instruction, not something the token does for you:
+
+- `--font-mono` is the document default (§3.1), so every mono step inherits it and needs no font utility.
+- **The three display steps must always be written with `font-display` alongside them** —
+  `class="font-display text-d1"`. `text-d1`, `text-d2` and `text-d3` are the only steps this applies to,
+  and they must never appear without it, or they render at display sizes in the mono face.
+- Because Archivo Black ships one weight, the display steps carry `--text-d*--font-weight: 400`. Do not add
+  a `font-bold` next to `font-display`; it triggers synthetic bold.
+- If engineering prefers to make this unforgettable, bind it once in `@layer components` —
+  `.text-d1, .text-d2, .text-d3 { font-family: var(--font-display); }` — rather than repeating the utility.
+  Either approach is acceptable; leaving it to memory is not.
+
 Rules:
 
 - Uppercase is applied by the step (`text-label`, `text-micro` are always uppercase). Never uppercase
   `text-body` or above.
-- `text-micro` may only be set in `--color-ink` or `--color-ink-muted`. At 11px nothing dimmer is
-  acceptable, and it must never be the *only* place a piece of information appears.
+- **`text-micro` has a brightness floor, not a whitelist:** it must clear 4.5:1 against whatever it sits on,
+  and `--color-ink-muted` is the dimmest value permitted. Brighter is always fine — `text-micro` is
+  routinely set in `--color-acid` (eyebrows, score readouts, the `PLACEMENT` marker) and in
+  `--color-ink-inverse` on light fills (chips, result labels), and those are correct, not exceptions.
+  What is banned is anything dimmer than `--color-ink-muted`: never `--color-line` (3.9), never
+  `--color-line-soft` (1.4), never `--color-hatch` (1.9) at this size. At 11px it must also never be the
+  *only* place a piece of information appears.
 - Measure: prose columns cap at `64ch`. Because the face is monospace, `1ch` is exactly one character, so
   `64ch` is a literal 64-character line — the top of the comfortable range. Lede caps at `52ch`.
 - Numerals: JetBrains Mono is tabular by default. Score readouts, progress counters, and the graph use it
@@ -304,7 +351,7 @@ Rules:
 ### 3.4 Wordmark
 
 `3alemny`, lowercase, `text-h3` (19px / 700) in mono, `--color-ink`, letter-spacing `-0.02em`, followed by
-a `0.55em × 1.05em` `--color-acid` block that blinks (§7). The `3` is a numeral in the source string — it
+a `0.55em × 1.05em` `--color-acid` block that blinks (§8). The `3` is a numeral in the source string — it
 is Arabizi, not a stylised glyph. Never set the wordmark in the display face; never set it in caps.
 
 ---
@@ -315,12 +362,19 @@ Base unit **4px**. Tailwind v4's default `--spacing: 0.25rem` is retained, so `p
 
 Permitted steps only — do not invent arbitrary values:
 
+Tailwind v4 computes spacing from `--spacing`, so fractional multipliers (`p-0.5`, `gap-2.5`, `px-3.5`)
+are generated natively with no configuration. Three of them are in the permitted set below because
+components genuinely need them; they are not an invitation to invent more.
+
 | Utility | px | Typical use |
 |---|---|---|
 | `0` | 0 | Gapless lattices. |
+| `0.5` | 2 | Progress-segment gaps. Inline code chip padding-y. Link hover bleed. |
 | `1` | 4 | Glyph nudges, chip inner gaps. |
 | `2` | 8 | Label→field gap, chip padding-x. |
+| `2.5` | 10 | Button inner `gap` between label and trailing glyph. |
 | `3` | 12 | Tight stacks. |
+| `3.5` | 14 | Button padding-x (`sm`). Input padding-x. Quiz option text-cell padding-y. |
 | `4` | 16 | Default gap between blocks inside a card. |
 | `5` | 20 | Card padding (mobile). |
 | `6` | 24 | Card padding (desktop). Quiz block padding (mobile). |
@@ -386,7 +440,7 @@ Focus rings use `outline`, which is not a shadow and works correctly at zero rad
 | Width | Use |
 |---|---|
 | `1px` | Default. Cards, inputs, dividers, grid lattice, chips. |
-| `2px` | Buttons (all variants, all states). Focus rings. Selected/answered quiz options. Game viewport. |
+| `2px` | Buttons (all variants, all states). Focus rings. **Quiz options in every state** — the width is constant there so selection cannot shift the stack (§7.5). Game viewport. |
 | `3px` | Track markers — the acid bar on a `CORE` cell's left edge. |
 | `4px` | Accent rule on callouts — the acid left border on TL;DR and explanation panels. |
 | `6px` | The hazard bar on a wrong answer. |
@@ -427,7 +481,8 @@ Every component is `border-radius: 0`, has no shadow, and uses only §2.4 tokens
 A 22px-tall inline tag. Never interactive.
 
 - `display: inline-flex; align-items: center; height: 22px; padding: 0 8px; border-width: 1px;`
-- Type: `text-micro` (11px / 700 / `+0.14em` / uppercase). Override the step's 500 weight to 700 here.
+- Type: `text-micro` (11px / `+0.16em` / uppercase) with the weight overridden from 500 to 700. Tracking is
+  the step's own `+0.16em` — it is not adjusted for chips.
 
 | Variant | Fill | Border | Text | Contrast on `--color-surface-raised` |
 |---|---|---|---|---|
@@ -448,11 +503,15 @@ only `border-right` and `border-bottom` (§6).
 
 1. **Header strip** — 32px tall, `display: flex; justify-content: space-between; align-items: center`.
    Left: track chip. Right: status chip. For slang cards the whole strip is the `--color-acid` bar
-   (full card width, flush to the card's inner edges via `-20px -20px 16px` negative margin, `-24px -24px 16px`
+   (full card width, flush to the card's inner edges via `-20px -20px 0` negative margin, `-24px -24px 0`
    at `md`), with the `SLANG` word in `--color-ink-inverse` and the status chip inverted to
    transparent-fill / `--color-ink-inverse` text / 1px `--color-ink-inverse` border. For core cards the
    strip is transparent with a 1px `--color-line-soft` bottom rule.
-2. **Title** — `text-h3`, `--color-ink`. Slang titles are quoted (§2.7). Margin-top 16px.
+   **The strip has no `margin-bottom` in either track.** The gap below it is owned entirely by the title's
+   `margin-top`. Margins do not collapse inside a flex column, so giving the strip a bottom margin *and*
+   the title a top margin would put 32px under a slang strip and 16px under a core strip — the two tracks
+   would not line up when placed side by side in a lattice.
+2. **Title** — `text-h3`, `--color-ink`. Slang titles are quoted (§2.7). `margin-top: 16px`, in both tracks.
 3. **Description** — `text-sm`, `--color-ink-muted`, clamped to 2 lines with `line-clamp-2`. Margin-top 8px.
 4. **Meta row** — `text-micro`, `--color-ink-muted`, pushed to the bottom with `margin-top: auto`.
    Format: `CORE · 4 MIN · UNLOCKS 2`.
@@ -473,7 +532,7 @@ only `border-right` and `border-bottom` (§6).
 | State | Change |
 |---|---|
 | Hover | Fill → `--color-surface-hover`; border → `--color-line-strong`; title → `--color-acid` (14.2:1). No transform, no scale, no lift. |
-| Focus-visible | `outline: 2px solid var(--color-focus); outline-offset: 2px`. In a lattice, `outline-offset: -2px` so the ring does not clip against neighbours. |
+| Focus-visible | `outline: 2px solid var(--color-focus); outline-offset: 2px`. In a lattice, `outline-offset: -2px` so the ring does not clip against neighbours, plus `position: relative; z-index: 3`. The inset ring lands on the card's own fill, which is `--color-surface-raised` (15.3:1) or `--color-surface` when locked (16.2:1) — both dark, so the ring stays `--color-focus` and never flips. Cards never take a light fill. |
 | Active | Fill → `--color-surface-sunken`; border stays `--color-line-strong`. |
 | Locked | Fill → `--color-surface`; locked hatch overlay; title → `--color-ink-muted` (6.1:1); acid marker → `--color-ink-muted`; description replaced by `REQUIRES: <prereq term>`; `[LOCKED]` chip; `aria-disabled="true"`; `cursor: not-allowed`; no hover response. |
 | Done | `status-done` chip; a 3px `--color-acid` bar flush to the card's left inner edge, full height. |
@@ -489,7 +548,9 @@ Shared across all variants and sizes:
 - `transition: background-color 80ms linear, border-color 80ms linear, color 80ms linear;`
   Never `transition: all`.
 - Focus-visible on every variant and state: `outline: 2px solid var(--color-focus); outline-offset: 2px`.
-  The ring never changes colour. It sits on the page ground at 16.2:1 even on an acid fill.
+  Buttons always use `--color-focus`, including `primary` in its acid-filled default state: the `+2px`
+  offset means the ring is painted on the page ground behind the button (16.2:1), never on the acid itself.
+  Buttons are never placed in a collapsed stack, so a button ring is never inset and never flips (§2.6).
 - Disabled never uses `opacity`.
 - Optional trailing glyph is ASCII or a mono-covered arrow: `→`, `>`, `↗`.
 
@@ -627,44 +688,104 @@ before the stem.
 
 **Options**
 
-A vertically stacked list with collapsed borders: every option gets `border: 1px solid var(--color-line)`
-and `margin-top: -1px` so adjacent edges share one pixel.
+A vertically stacked list with collapsed borders. **Every option carries a 2px border in every state** and
+`margin-top: -2px` so adjacent edges share the same two pixels. Border *width* never changes — only border
+*colour* changes. This is deliberate: if idle were 1px and selected were 2px, choosing an option would grow
+the element by 2px and shove every option below it down the page mid-interaction.
+
+Each option is `position: relative` so the active one can paint its border over its neighbours':
+
+| Situation | `z-index` |
+|---|---|
+| Idle, inert | `0` |
+| Hover | `1` |
+| Focus-visible | `3` |
+| Selected, correct, wrong, missed answer | `2` |
+
+Focus outranks everything so the ring is never clipped by a neighbour.
 
 | Property | Value |
 |---|---|
 | Min height | 60px |
 | Width | 100% |
-| Layout | `display: grid; grid-template-columns: 44px 1fr; align-items: center; text-align: left` |
+| Layout | `display: grid; grid-template-columns: 44px 1fr; align-items: stretch; text-align: left` |
 | Fill | `--color-surface-raised` |
+| Border | 2px solid, colour per state table. Never any other width. |
 | Radius | 0 |
+| Position | `relative`, `z-index` per the table above |
 | Transition | `background-color 160ms linear, color 160ms linear, border-color 80ms linear` |
 
-- **Key cell** (column 1): 44px square, `border-right: 1px solid var(--color-line)`, centred `A`/`B`/`C`/`D`
-  in `text-label`, `--color-ink-muted` (5.7:1). This doubles as the keyboard shortcut hint — pressing
-  `A`–`D` selects.
+- **Key cell** (column 1): 44px wide. The grid is `align-items: stretch`, so **the key cell fills the full
+  row height and its `border-right: 1px solid var(--color-line)` runs the full row height, edge to edge** —
+  it is a full-height column rule, not a 44px stub. The glyph inside is centred with
+  `display: flex; align-items: center; justify-content: center`. Letter `A`/`B`/`C`/`D` in `text-label`,
+  `--color-ink-muted` (5.7:1). This doubles as the keyboard shortcut hint — pressing `A`–`D` selects.
 - **Text cell** (column 2): `text-body` — 17px / 1.65, `--color-ink` (15.3:1), padding `14px 16px`.
+  Set `align-self: center` so short text sits centred in a tall row.
 - **Result label** (column 2, right-aligned, post-submit only): `text-micro`.
 
-Option states:
+Option states. Rows 1, 2, 4–8 are mutually exclusive fills. **Row 3 is a modifier that composes with any
+of them** — an option can be focused while correct, wrong, selected, or idle.
 
-| # | State | Fill | Border | Text | Key cell | Right label |
+| # | State | Fill | Border (2px) | Text | Key cell | Right label |
 |---|---|---|---|---|---|---|
-| 1 | Idle | `--color-surface-raised` | 1px `--color-line` | `--color-ink` 15.3 | `--color-ink-muted` 5.7 | — |
-| 2 | Hover (pre-submit) | `--color-surface-hover` | 1px `--color-line-strong` | `--color-ink` 13.9 | `--color-acid` 14.2 | — |
-| 3 | Focus-visible | unchanged | unchanged | unchanged | unchanged | + `--color-focus` ring, `outline-offset: -2px` |
-| 4 | Selected (pre-submit) | `--color-acid-deep` | 2px `--color-acid` | `--color-ink` 7.7 | `--color-acid` fill, `--color-ink-inverse` glyph, 16.7 | — |
-| 5 | Correct | `--color-acid` | 2px `--color-acid` | `--color-ink-inverse` 16.7 | `--color-surface` fill, `[OK]` in `--color-acid`, 16.7 | `CORRECT` in `--color-ink-inverse` |
-| 6 | Wrong (the one picked) | `--color-ink` | 2px `--color-ink` | `--color-ink-inverse` 16.2 | `--color-surface` fill, `[X]` in `--color-ink`, 16.2 | `WRONG` in `--color-ink-inverse` |
-| 7 | Missed answer | `--color-surface` | 2px `--color-acid` | `--color-acid` 16.7 | `>` in `--color-acid` | `ANSWER` in `--color-acid` |
-| 8 | Inert (unpicked, post-submit) | `--color-surface` | 1px `--color-line-soft` | `--color-ink-muted` 6.1 | `--color-ink-muted` 6.1 | — |
+| 1 | Idle | `--color-surface-raised` | `--color-line` | `--color-ink` 15.3 | `--color-ink-muted` 5.7 | — |
+| 2 | Hover (pre-submit) | `--color-surface-hover` | `--color-line-strong` | `--color-ink` 13.9 | `--color-acid` 14.2 | — |
+| 3 | Focus-visible *(modifier)* | unchanged | unchanged | unchanged | unchanged | see the focus rule below |
+| 4 | Selected (pre-submit) | `--color-acid-deep` | `--color-acid` | `--color-ink` 7.7 | `--color-acid` fill, `--color-ink-inverse` glyph, 16.7 | — |
+| 5 | Correct | `--color-acid` | `--color-acid` | `--color-ink-inverse` 16.7 | `--color-surface` fill, `[OK]` in `--color-acid`, 16.7 | `CORRECT` in `--color-ink-inverse` |
+| 6 | Wrong (the one picked) | `--color-ink` | `--color-ink` | `--color-ink-inverse` 16.2 | `--color-surface` fill, `[X]` in `--color-ink`, 16.2 | `WRONG` in `--color-ink-inverse` |
+| 7 | Missed answer | `--color-surface` | `--color-acid` | `--color-acid` 16.7 | `>` in `--color-acid` | `ANSWER` in `--color-acid` |
+| 8 | Inert (unpicked, post-submit) | `--color-surface` | `--color-line-soft` | `--color-ink-muted` 6.1 | `--color-ink-muted` 6.1 | — |
+
+**Focus ring on a quiz option — read this carefully.**
+
+The ring is drawn *inside* the option (`outline: 2px solid; outline-offset: -4px`) because the options form
+a collapsed stack and an outward ring would be painted over by the neighbour below.
+
+The offset is `-4px`, not `-2px`. At `-2px` the outline lands exactly on top of the option's own 2px border
+and replaces it visually, so a focused option in state 4, 5, 6 or 7 would lose the acid or ink border that
+tells the user what the option *is*. At `-4px` the ring sits just inside the border and both are legible —
+border says "this is correct / wrong / selected", ring says "this is where your keyboard is".
+
+An inset ring therefore sits **on the option's own fill**, and states 5 and 6 have light fills. A `#E8EAED`
+ring on the `#E8EAED` wrong-answer fill is 1.0:1 — invisible. These options remain keyboard-reachable after
+submit, so this is a real defect, not a theoretical one.
+
+**The ring colour is therefore chosen by the lightness of the fill it is drawn on:**
+
+| Option state | Fill | Ring colour | Ratio |
+|---|---|---|---|
+| 1 Idle | `--color-surface-raised` | `--color-focus` `#E8EAED` | 15.3 |
+| 2 Hover | `--color-surface-hover` | `--color-focus` | 13.9 |
+| 4 Selected | `--color-acid-deep` | `--color-focus` | 7.7 |
+| 5 **Correct** | `--color-acid` | **`--color-ink-inverse` `#0B0C0E`** | **16.7** |
+| 6 **Wrong** | `--color-ink` | **`--color-ink-inverse` `#0B0C0E`** | **16.2** |
+| 7 Missed answer | `--color-surface` | `--color-focus` | 16.2 |
+| 8 Inert | `--color-surface` | `--color-focus` | 16.2 |
+
+No new colour token and no new hue: the dark ring reuses `--color-ink-inverse`, and both flipped pairs are
+already measured in §2.5. Implement as a single rule plus two overrides keyed off the state class — do not
+compute it at runtime.
+
+The same principle governs the whole system: **the focus ring is `--color-focus` when it lands on a dark
+surface and `--color-ink-inverse` when it lands on a light fill (`--color-acid` or `--color-ink`).** For
+buttons and cards the ring is offset *outward* onto the page ground, which is always dark, so those always
+use `--color-focus` — only inset rings ever flip.
 
 State 6 additionally carries the hazard bar: a 6px-tall, full-width element flush to the option's bottom
 inner edge, painted `repeating-linear-gradient(45deg, var(--color-surface) 0 3px, transparent 3px 6px)`
 over the `--color-ink` fill (16.2:1 stripe contrast). It also shakes once (§8).
 
 Every post-submit state carries a word (`CORRECT` / `WRONG` / `ANSWER`) and an ASCII glyph, so none of them
-depends on colour. Post-submit, all options get `aria-disabled="true"` and pointer events off; the picked
-option gets `aria-live="polite"` announcement text.
+depends on colour. Post-submit, all options get `aria-disabled="true"` and `pointer-events: none`; the
+picked option gets `aria-live="polite"` announcement text.
+
+**Use `aria-disabled`, not the `disabled` attribute.** `disabled` removes the element from the tab order;
+`aria-disabled` does not. Keeping the answered options focusable lets a keyboard or screen-reader user walk
+back over the results and read what they picked against what was correct — which is the entire point of
+showing the resolved state. It is also exactly why the focus-ring flip above is required rather than
+cosmetic: a focused option in state 5 or 6 is a real thing a real user reaches.
 
 **Explanation panel** — revealed after submit, 24px below the options.
 
@@ -687,6 +808,68 @@ option gets `aria-live="polite"` announcement text.
 
 One question per screen. At a 900px viewport a four-option question must fit without scrolling.
 
+### 7.6 Link
+
+Three variants. Every variant is `border-radius: 0`, has no background on rest, and transitions
+`color, text-decoration-color 80ms linear`. Focus on all three is the standard outward ring:
+`outline: 2px solid var(--color-focus); outline-offset: 2px` (dark ground, so never flips — §2.6).
+
+**`link` — the default. Any link sitting inside a run of prose.**
+
+| State | Colour | Underline | Background | Ratio |
+|---|---|---|---|---|
+| Default | `--color-acid` | 1px solid `--color-acid`, `text-underline-offset: 3px`, `text-decoration-thickness: 1px` | none | 16.7 |
+| Hover | `--color-acid` | `text-decoration-thickness: 2px` | `--color-acid-wash`, with 2px horizontal bleed via `padding: 0 2px; margin: 0 -2px` | 14.3 |
+| Focus-visible | unchanged | unchanged | unchanged | + `--color-focus` ring |
+| Active | `--color-acid-dim` | 2px `--color-acid-dim` | `--color-acid-wash` | 9.0 on wash |
+| Visited | `--color-acid-dim` | 1px `--color-acid-dim` | none | 10.4 |
+
+The resting underline is **not optional** on this variant. Inside prose, colour alone must not be the only
+thing distinguishing a link (WCAG 1.4.1), and acid-vs-ink is a colour difference.
+
+**`link--list` — a link that is its own list item, where every sibling is also a link.**
+
+Used by: the homepage term lists (§9.2 step 3), the rail's `REQUIRES` / `UNLOCKS` lists (§9.3), the mobile
+nav panel, the prev/next bar.
+
+| State | Colour | Underline | Ratio |
+|---|---|---|---|
+| Default | `--color-ink` | none | 16.2 |
+| Hover | `--color-acid` | 1px `--color-acid` | 16.7 |
+| Focus-visible | `--color-acid` | 1px `--color-acid` | + ring |
+| Visited | `--color-ink` (unchanged) | none | 16.2 |
+| Locked | `--color-ink-muted`, locked hatch on the row, trailing `[LOCKED]`, `aria-disabled` | none | 6.1 |
+
+No resting underline here, and that is deliberate rather than sloppy: 1.4.1 governs links embedded *in
+text*. In a list where every row is a link, linkness is carried by structure, and 18 underlined acid rows
+would be unreadable. Rows still gain an underline plus an acid colour shift on hover and focus, so the
+affordance is never colour-only at the moment of interaction. Visited is intentionally not distinguished
+in this variant — these lists show completion state via the `status-done` chip and the acid left bar
+instead, which is more accurate than "you clicked this once".
+
+**`link--quiet` — footer and metadata links.**
+
+| State | Colour | Underline | Ratio |
+|---|---|---|---|
+| Default | `--color-ink-muted` | none | 6.1 |
+| Hover | `--color-ink` | 1px `--color-ink` | 16.2 |
+| Focus-visible | `--color-ink` | 1px `--color-ink` | + ring |
+| Visited | `--color-ink-muted` (unchanged) | none | 6.1 |
+
+Keeps the footer from becoming a wall of acid. Acid stays rationed.
+
+**Inline code-chip links** (a term reference inside prose, §9.3 step 7) use the chip fill from §7.5 with
+`link` behaviour: `--color-acid` text on `--color-acid-wash` (14.3:1), no resting underline — the chip's
+border and fill already mark it as a distinct object — gaining a 1px `--color-acid` underline on hover and
+focus. Visited chips take `--color-acid-dim` text (9.0:1 on wash).
+
+**External links** get a trailing `↗` at `text-micro` in the link's current colour, plus
+`rel="noopener noreferrer"`. There are very few of these; sources live in `docs/GLOSSARY.md`.
+
+This section introduces exactly one pair not already in §2.5 — `--color-acid-dim` on `--color-acid-wash`,
+estimated **9.0:1**, used for the active state of a prose link and for a visited inline code chip. It is
+added to the §2.5 table. Every other ratio above already appears there.
+
 ---
 
 ## 8. Motion
@@ -702,14 +885,16 @@ numeric `duration-<ms>` utilities — there is no `--duration-*` theme namespace
 
 | Token | Value | Use |
 |---|---|---|
-| `--ease-hard` | `cubic-bezier(0.2, 0, 0.2, 1)` | Wipes and one-shot reveals. |
+| `--ease-hard` | `cubic-bezier(0.2, 0, 0.2, 1)` | **Every** wipe and one-shot reveal, without exception. |
 | `linear` | — | Everything else. Colour, border, opacity. |
 | duration `80` | 80ms | Hover and focus colour/border swaps. |
 | duration `160` | 160ms | Committed state changes. Progress segment fill. |
-| duration `240` | 240ms | One-shot judder. |
+| duration `240` | 240ms | One-shot judder. The explanation wipe. |
 | duration `300` | 300ms | The unlock wipe. |
 
-Never `transition: all`. Always enumerate properties.
+These four durations are the complete set. **No animation in this system uses a duration that is not on
+this list** — if a value like 200ms appears in a PR, it is a mistake, not a nuance. Never
+`transition: all`; always enumerate properties.
 
 ### What animates
 
@@ -718,9 +903,9 @@ Never `transition: all`. Always enumerate properties.
 | Hover / focus on buttons, cards, options, inputs, links, graph nodes | `background-color`, `border-color`, `color`, `text-decoration-color` | 80ms | `linear` | The only universal transition. |
 | Quiz option resolving on submit | `background-color`, `color` | 160ms | `linear` | No transform. |
 | Progress segment filling | `background-color` | 160ms | `linear` | Width is never animated. |
-| Explanation panel reveal | `clip-path` `inset(0 0 100% 0)` → `inset(0 0 0 0)` | 200ms | `--ease-hard` | A hard wipe down. No fade, no slide. |
+| Explanation panel reveal | `clip-path` `inset(0 0 100% 0)` → `inset(0 0 0 0)` | 240ms | `--ease-hard` | A hard wipe down. No fade, no slide. |
 | Wrong answer | `transform: translateX` — 0, −6px, 6px, −4px, 4px, 0 | 240ms | `linear` | Runs once. Max displacement 6px. No rotation. |
-| Lesson unlock (locked → unlocked) | Hatch overlay `clip-path` wipes left→right, then border colour swaps | 300ms | `linear` | Fires only on the unlock event. Never on page load. |
+| Lesson unlock (locked → unlocked) | Hatch overlay `clip-path` wipes left→right, then border colour swaps | 300ms | `--ease-hard` | Fires only on the unlock event. Never on page load. |
 | Caret block (wordmark, hero, prompt inputs) | `opacity` 1 → 0 | 1000ms | `steps(2, start)` | Infinite. The only infinite animation permitted, alongside the ticker. |
 | Homepage ticker | `transform: translateX(0)` → `translateX(-50%)` | 40s per lap | `linear` | `animation-play-state: paused` on hover and on focus-within. `aria-hidden="true"`; the same terms exist as real links elsewhere on the page. |
 | Graph force settle | simulation | ≤1200ms then frozen | — | Does not re-run on hover, filter, or selection. |
@@ -754,7 +939,7 @@ Then these specific substitutions, which the global rule cannot express:
 |---|---|
 | Ticker scrolls | Does not translate at all. Renders as a static single row, `overflow: hidden`, animation removed (not just shortened). |
 | Caret blinks | Renders solid, permanently visible. |
-| Wrong answer shakes | No transform. Instead the border steps from 2px to 4px `--color-ink` instantly, and the hazard bar goes from 6px to 8px. |
+| Wrong answer shakes | The shake is simply removed. **No substitute is added, and none is needed** — state 6 already carries four non-motion signals: the full fill inversion to `--color-ink`, the 2px `--color-ink` border, the `[X]` glyph, the word `WRONG`, and the 6px hazard bar. The shake was always redundant emphasis, never the signal. Do not compensate by thickening the border: option borders are a constant 2px so the stack cannot shift (§7.5), and the hazard bar is capped at 6px by §6. |
 | Explanation wipes in | Appears instantly, fully drawn. |
 | Unlock hatch wipes out | Hatch is removed instantly. |
 | Games use particles, trails, screen shake | All removed. Timed mechanics keep running; decorative motion does not. |
@@ -811,16 +996,21 @@ button. Everything else recedes into `--color-ink-muted` at `text-sm`.
    - Left cell `CORE`: transparent header bar with `CORE` in `--color-acid` and a 1px `--color-line-soft`
      bottom rule; a 3px `--color-acid` bar on the cell's left inner edge.
    - Right cell `SLANG`: solid `--color-acid` header bar with `SLANG` in `--color-ink-inverse`.
-   - Each cell: `text-d3` heading, one line of `text-sm` `--color-ink-muted` description, then the term
-     names one per line at `text-body`, each a link (§9.5 link styles). Locked terms show the locked hatch
-     on their row and a trailing `[LOCKED]`.
+   - Each cell: `text-d3` heading (paired with `font-display`, §3.3), one line of `text-sm`
+     `--color-ink-muted` description, then the term names one per line at `text-body`, each a
+     `link--list` (§7.6). Locked terms show the locked hatch on their row and a trailing `[LOCKED]`.
 4. **How it works.** 3-cell gapless lattice, stacking below `md`, each cell 32px padded, 200px min height.
-   Each cell: a numeral `01` / `02` / `03` at `text-d3` in `--color-line-strong` (recedes deliberately),
-   then a `text-label` `--color-ink` title, then two lines of `text-sm` `--color-ink-muted`.
-   Titles: `PLACE YOURSELF`, `UNLOCK BY PREREQ`, `PLAY IT BACK`.
-5. **Games band.** 3-cell gapless lattice. Each cell: game name at `text-h2` `--color-ink`, one line of
-   rule-of-play at `text-sm` `--color-ink-muted`, a `PLAY →` ghost link pinned bottom-left. Hover fills the
-   cell with `--color-acid-wash` and turns the game name `--color-acid`. **No screenshots.**
+   Each cell: a numeral `01` / `02` / `03` at `text-d3` with `font-display` in `--color-line-strong`
+   (recedes deliberately), then a `text-label` `--color-ink` title, then two lines of `text-sm`
+   `--color-ink-muted`.
+   **Content: `<STEP_TITLE>` and `<STEP_BODY>` ×3 — copy, not design.** The numerals are fixed at three
+   because the lattice is three cells. Design owns the budget the copy has to fit: title **≤ 18 characters**
+   uppercase on one line, body **≤ 90 characters** across two lines at `text-sm`. Anything longer breaks the
+   200px cell.
+5. **Games band.** 3-cell gapless lattice. Each cell: game name at `text-d3` with `font-display`,
+   `--color-ink`; one line of rule-of-play at `text-sm` `--color-ink-muted`; a `PLAY →` ghost link pinned
+   bottom-left. Hover fills the cell with `--color-acid-wash` and turns the game name `--color-acid`.
+   **No screenshots.**
 6. **Graph teaser.** Full-bleed band, fill `--color-surface-sunken`, 96px padding-y. A static,
    non-interactive rendering of the term lattice drawn in inline SVG by engineering — 1px `--color-line`
    orthogonal edges, hard-edged square nodes, no labels at this size, no external asset. Centred beneath it:
@@ -839,8 +1029,9 @@ Top to bottom in the content column:
    `LESSONS / CORE / TOKENS`.
 2. **Chip row** — track chip + status chip, 16px below.
 3. **Title** — `text-d2`, Archivo Black, `--color-ink`, 16px below. Slang titles quoted.
-4. **One-line definition** — `text-lede`, `--color-acid`, max 60ch, 16px below. This is the memorable line
-   and **the only acid prose on the page**. Everything else that is acid is a chip, a rule, or a control.
+4. **One-line definition** — `text-lede`, `--color-acid`, max 52ch (the lede measure, §4), 16px below.
+   This is the memorable line and **the only acid prose on the page**. Everything else that is acid is a
+   chip, a rule, or a control.
 5. **TL;DR block** — 40px below. Fill `--color-surface-sunken`, 1px `--color-line`,
    `border-left: 4px solid var(--color-acid)`, 20px padding. Label `TL;DR` in `text-label` `--color-acid`,
    then three bullets at `text-sm` `--color-ink`. Bullet marker is a 6px `--color-acid` square, not a disc.
@@ -849,8 +1040,11 @@ Top to bottom in the content column:
 7. **Inline term references** — the code chip style from §7.5. Linked. Visited chips take
    `--color-acid-dim` text.
 8. **Code / prompt blocks** — fill `--color-surface-sunken`, 1px `--color-line`, `text-code`, 16px padding.
-   A 28px top bar with a 1px `--color-line-soft` bottom rule carries a `text-micro` label on the left
-   (`PROMPT`, `RESPONSE`, `JSON`) and a `COPY` ghost `sm` button on the right. Horizontal scroll, never wrap.
+   A **40px** top bar with a 1px `--color-line-soft` bottom rule carries a `text-micro` label on the left
+   (`PROMPT`, `RESPONSE`, `JSON`) and a `COPY` ghost `sm` button (36px, §7.3) on the right, vertically
+   centred with 2px of clearance above and below. The bar is 40px, not 28px, precisely so the smallest
+   button in the system fits inside it — 40px also matches the quiz top strip and the game console bars,
+   so every chrome bar on the site is one height. Horizontal scroll, never wrap.
 9. **Say-this / not-this pair** — 2-cell gapless lattice.
    - Left: `SAY THIS` in `text-label` `--color-acid`, 3px `--color-acid` left bar.
    - Right: `NOT THIS` in `text-label` `--color-ink`, 3px `--color-ink` left bar, and a 6px hazard-hatch bar
@@ -890,8 +1084,15 @@ A focused mode. The global nav is a distraction here and gets removed.
 2. **Score** — the numeral at `text-d1` in `--color-acid`, immediately followed by `/ 10` at `text-d1` in
    `--color-line-strong`. One line, hard-left.
 3. **Level slab** — full-bleed band, 88px tall, fill `--color-acid`, text `--color-ink-inverse` (16.7:1) at
-   24px / 700 / `+0.12em` / uppercase, centred. One of `NEW HERE` / `SEMI-ONLINE` / `TERMINALLY ONLINE`.
-   This is the second full-bleed acid moment on the site and the only one outside the homepage ticker.
+   24px / 700 / `+0.12em` / uppercase, centred. This is the second full-bleed acid moment on the site and
+   the only one outside the homepage ticker.
+   **Content: `<PLACEMENT_BAND_LABEL>` — supplied by `head-of-curriculum`.** Placement outcomes and their
+   names are quiz structure, not visual design, so this spec does not name them. What design does own is
+   the container, and the constraint Curriculum needs in order to write them: **one line, uppercase,
+   maximum 22 characters** including spaces, or the label wraps out of an 88px band at the `sm` breakpoint.
+   However many bands Curriculum defines, they all use this identical treatment — the band never changes
+   colour, height, or type by outcome. A "good" result and a "bad" result look the same here on purpose;
+   the number above it is the message.
 4. **The map** — a gapless lattice of all 18 terms, 3 columns at `md`, 2 at `sm`, 1 below. Each cell 64px
    tall: term name at `text-sm`, track marker, and either an unlocked border + acid marker or the locked
    hatch. The user should see their whole territory in one glance.
@@ -923,6 +1124,9 @@ Each game sits in a console frame.
 - **Viewport**: 2px `--color-ink` border, fill `--color-surface-sunken`, radius 0, max width 960px.
 - **Top bar**: 40px, `border-bottom: 1px solid var(--color-line)`, game name at `text-label`
   `--color-ink` on the left, `SCORE 0000` at `text-micro` on the right with the numerals in `--color-acid`.
+  `text-label` here is deliberate and is not a conflict with `text-d3`: this is a chrome strip identifying
+  the running game, not the game's title. The `text-d3` title appears above the console frame and in the
+  start overlay.
 - **Bottom bar**: 40px, `border-top: 1px solid var(--color-line)`, keyboard hints at `text-micro`
   `--color-ink-muted`.
 - **Overlays** (start, pause, game over): fill `--color-surface` at full opacity — no blur, no translucency.
@@ -976,8 +1180,12 @@ Both are optional decoration. Neither may carry information, and both must sit u
 
 - Every text/background pair in §2.5 clears AA. Measure before merge.
 - No state is signalled by colour alone. Every state carries a word or an ASCII glyph.
-- Focus is always visible: `2px solid var(--color-focus)` at `2px` offset (`-2px` inside collapsed-border
-  stacks). Never `outline: none` without a replacement of equal or greater visibility.
+- Focus is always visible, on every fill: `2px solid` at `+2px` offset normally; inset inside
+  collapsed-border stacks, at `-2px` for lattice cards (1px border) and `-4px` for quiz options (2px
+  border). The ring is `--color-focus` on dark surfaces and `--color-ink-inverse` on light fills
+  (`--color-acid`, `--color-ink`) — see §2.6 and the quiz-option focus table in §7.5. A single fixed ring
+  colour is **not** acceptable here, because an inset `#E8EAED` ring on the `#E8EAED` wrong-answer fill is
+  1.0:1. Never `outline: none` without a replacement of equal or greater visibility.
 - Target size: interactive targets are at least 44 × 44px, or 24 × 24px with 24px of clear spacing.
   The quiz key cell is exactly 44px for this reason.
 - `opacity` is never used to express a disabled or inactive state.
