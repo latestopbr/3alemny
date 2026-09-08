@@ -115,7 +115,7 @@ One hue (~72°, chartreuse). Four steps. **There is no second hue anywhere in th
 | `--color-acid-dim` | `#A3CC00` | Visited links, pressed acid fills. |
 | `--color-acid-deep` | `#3D4D00` | Selected fill, done chip. |
 | `--color-acid-wash` | `#1A2000` | Hover wash, inline code chip fill. |
-| `--color-focus` | `#E8EAED` | Focus ring on dark surfaces — which is nearly everywhere. On a light fill (`--color-acid` or `--color-ink`) an inset ring flips to `--color-ink-inverse` instead. See §2.6. |
+| `--color-focus` | `#E8EAED` | The outer stroke of the focus ring. The inner stroke is `--color-ink-inverse`. The ring is always both, always the same, on every component — see §2.6. |
 
 Sixteen colour tokens. If you need a seventeenth, the design is wrong — raise it with `head-of-design`.
 
@@ -190,11 +190,78 @@ and **every state also carries a text label or an ASCII glyph**, so no state is 
 | **Wrong / error** | **Inversion.** Solid `--color-ink` `#E8EAED` fill, `--color-ink-inverse` text, 2px `--color-ink` border, `[X]` glyph cell, label `WRONG`, plus a 6px hazard-hatch bar flush to the bottom inner edge (45°, 3px `--color-surface` stripe / 3px transparent, over the ink fill). A white slab in a black page is louder than red, and it can never be confused with acid. |
 | **The answer you missed** | Outlined, not filled: `--color-surface` fill, 2px `--color-acid` border, `--color-acid` text, `>` glyph cell, label `ANSWER`. Distinguishable from "you got it right" because that one is filled. |
 | **Warning / caution** | `--color-acid-wash` fill, 1px `--color-acid-dim` border, `!!` prefix, `--color-ink` text. Low-energy acid. |
-| **Focus** | `outline: 2px solid; outline-offset: 2px`. Never acid — acid is reserved for meaning, and an acid ring on an acid button is invisible. **Ring colour follows the surface the ring lands on:** `--color-focus` `#E8EAED` on any dark surface, `--color-ink-inverse` `#0B0C0E` on a light fill (`--color-acid` or `--color-ink`). An *outward* ring (`+2px`) lands on the page ground, which is always dark, so buttons and cards always use `--color-focus` (16.2:1) even when the control itself is acid-filled. Only an *inset* ring ever lands on the control's own fill, and that is the case that flips. Inset values are `-2px` for a 1px-bordered lattice card (§7.2) and `-4px` for a 2px-bordered quiz option (§7.5) — in both cases just inside the border, so the ring never paints over it. An inset ring requires the element to have a single fill across the ring's whole path (§11). |
+| **Focus** | One two-tone ring, identical on every component, drawn entirely outside the element. `box-shadow: var(--focus-ring)`. Never acid. See **The focus ring** immediately below — it is the single rule, and no component overrides it. |
 | **Selected (pre-commit)** | `--color-acid-deep` fill, 2px `--color-acid` border, key glyph in `--color-acid` (7.9:1). The key cell itself stays transparent — see the single-fill rule in §7.5. |
 | **Visited link** | `--color-acid-dim` `#A3CC00` text (10.4:1) instead of `--color-acid`. Same hue, clearly dimmer. |
 | **Disabled control** | No `opacity`. Explicit token swap: fill `--color-surface-raised`, text `--color-line`, border 2px `--color-line-soft`, `cursor: not-allowed`, no hover transition. `opacity` is banned for disabled states because it makes contrast unpredictable. |
 | **Locked lesson** | Not a disabled control — it is readable content. Fill stays `--color-surface` (flush with the page, so it recedes), 1px `--color-line` border, title in `--color-ink-muted` (6.1:1), acid marker replaced by an `--color-ink-muted` square, `[LOCKED]` chip top-right, body copy replaced by `REQUIRES: <prereq>`, and a 45° `--color-hatch` texture over the whole card. |
+
+### The focus ring — the one rule
+
+Read this once and apply it mechanically. There are no per-component focus rules anywhere in this
+document; every other section points here.
+
+**The palette property that forces this.** Measure the two lightest tokens:
+
+| Token | Hex | Relative luminance |
+|---|---|---|
+| `--color-acid` | `#CCFF00` | **0.8436** |
+| `--color-ink` / `--color-focus` | `#E8EAED` | **0.8212** |
+
+**The accent is brighter than the white.** Acid is not a colour accent in the luminance sense — it is a
+second near-white. `#E8EAED` on `#CCFF00` is **1.03:1**. That means *no single light ring colour can work
+in this palette*, and no rule of the form "pick the ring colour from the fill" can either, because the ring
+crosses whatever children the component happens to have. Three separate defects in three separate
+components all reduced to this one property. So the ring stops depending on what it crosses.
+
+**The token.** Declared in `:root`, not `@theme` (it is a shadow value, not a colour):
+
+```
+--focus-ring: 0 0 0 2px var(--color-ink-inverse), 0 0 0 4px var(--color-focus);
+```
+
+An inner 2px stroke in `--color-ink-inverse` `#0B0C0E` and an outer 2px stroke in `--color-focus`
+`#E8EAED`. Zero offset, zero blur, spread only — geometrically a ring, not a shadow.
+
+**Why this generalises where the previous rules did not.** Both strokes grow *outward* from the border box,
+so **the ring never enters the element and never crosses any of its children.** Whatever a component
+contains — an acid bar, an inverted header strip, a hatch, a key cell, a nested chip — is irrelevant to
+focus. And the two strokes are `--color-ink-inverse` against `--color-focus`, which is **16.2:1 against
+each other**. The indicator therefore contrasts with *itself*, independent of its surroundings: against a
+dark neighbour the outer light stroke reads, against acid or ink the inner dark stroke reads, and there is
+no third case. An engineer building a component that this document never mentions does not need to audit
+anything.
+
+**The procedure. Three steps, no judgement calls.**
+
+1. On `:focus-visible`, set `box-shadow: var(--focus-ring)`. Do not change the ring's colour, width or
+   offset. Do not add a second indicator. Do not suppress any child.
+2. If the component sits in a gapless lattice or a collapsed stack, add `position: relative` and
+   `z-index: 3` (the component-local band, §4) so the ring paints over its neighbours instead of under them.
+3. If any ancestor clips with `overflow: hidden`, either drop the clip or give that ancestor `padding: 4px`
+   so the 4px ring has room. A clipped ring is a failure.
+
+Also always: `outline: 2px solid transparent; outline-offset: 2px` alongside the box-shadow. It is
+invisible normally, but Windows High Contrast / `forced-colors` mode discards `box-shadow` and repaints
+`outline` in the system highlight colour. Without it, focus vanishes entirely in that mode.
+
+**Adjacency ratios.** Every pair is already in §2.5; the ring introduces none.
+
+| The ring against | Which stroke carries it | Ratio |
+|---|---|---|
+| Itself (inner vs outer) | both | **16.2** |
+| `--color-surface` `#0B0C0E` | outer light | 16.2 |
+| `--color-surface-raised` `#131417` | outer light | 15.3 |
+| `--color-surface-hover` `#1C1E22` | outer light | 13.9 |
+| `--color-surface-sunken` `#050506` | outer light | 16.9 |
+| `--color-acid` `#CCFF00` | inner dark | 16.7 |
+| `--color-ink` `#E8EAED` | inner dark | 16.2 |
+| `--color-line-strong` `#9AA1AB` | inner dark | 7.5 |
+
+**Never do these**, all of which appeared in earlier drafts of this document and all of which are now
+banned outright: an inset ring (`outline-offset` negative); choosing the ring colour from the element's
+fill; hiding a child while focused to make room for the ring; requiring a component to have a single
+background colour. Those were three patches for one property. This is the fix.
 
 ### 2.7 Track distinction — core vs slang
 
@@ -437,15 +504,27 @@ Enforcement: `--radius-*: initial` in `@theme` deletes the `rounded-*` utilities
 **None.** No `box-shadow`, no `filter: drop-shadow()`, no `text-shadow`, at any value.
 
 This includes hard offset shadows (`box-shadow: 4px 4px 0 …`). Yes, they are a brutalist staple. They are
-still banned here, because "no shadows except the ones I like" is a rule nobody enforces. Elevation is
-expressed by, in order of preference:
+still banned here, because "no shadows except the ones I like" is a rule nobody enforces.
+
+**Exactly one exception exists, and it is mechanically checkable: `--focus-ring` (§2.6).** It is the only
+`box-shadow` permitted anywhere in the codebase. It qualifies because it is not a shadow in any visual
+sense — both strokes have **zero x-offset, zero y-offset and zero blur**, so the declaration is a pure
+spread ring. That shape is the test: a `box-shadow` is allowed only if it matches `0 0 0 <n>px <colour>`.
+Any non-zero offset or blur is a shadow and is banned. Review can grep for it.
+
+This exception exists because the palette leaves no alternative: acid is brighter than the white (§2.6), so
+a single-stroke `outline` cannot be made visible against every surface, and a two-tone ring needs two
+strokes on one box. Clearing `--shadow-*` in §2.8 removes Tailwind's shadow *utilities*; `--focus-ring` is
+a plain custom property in component CSS and is unaffected by that.
+
+Elevation is expressed by, in order of preference:
 
 1. A surface step (`--color-surface` → `--color-surface-raised` → `--color-surface-hover`).
 2. Border weight (1px → 2px).
 3. Border colour (`--color-line` → `--color-line-strong` → `--color-acid`).
 4. Full inversion (dark-on-light instead of light-on-dark).
 
-Focus rings use `outline`, which is not a shadow and works correctly at zero radius.
+Focus rings are specified in full in §2.6 and work correctly at zero radius.
 
 ### Border widths
 
@@ -519,12 +598,16 @@ only `border-right` and `border-bottom` (§6).
    at `md`), with the `SLANG` word in `--color-ink-inverse` and the status chip inverted to
    transparent-fill / `--color-ink-inverse` text / 1px `--color-ink-inverse` border. For core cards the
    strip is transparent with a 1px `--color-line-soft` bottom rule.
-   **In both tracks the strip carries `padding-inline` equal to the card's own padding** — 20px, or 24px at
-   `md`. The slang strip is pulled full-bleed by negative margins, so without this its contents would sit
-   flush against the card's border; restoring the padding puts `SLANG` on the same left edge as the title
-   below it. The core strip is not pulled full-bleed and so needs no negative margin, but it takes the same
-   `padding-inline: 0` relative to the card's content box — the net effect is that both tracks' chips and
-   titles share one left alignment.
+   **`padding-inline` differs by track, and the two values are what make the tracks line up:**
+   - **Slang strip: `padding-inline: 20px`, or 24px at `md`** — matching the card's own padding. It is
+     pulled full-bleed by the negative margins above, so it starts outside the content box; this padding
+     puts it back. Without it, `SLANG` sits flush against the card border.
+   - **Core strip: `padding-inline: 0`.** It is not pulled full-bleed, so it already starts at the content
+     box edge. Adding padding here would indent the core chip 40px against the slang chip's 20px — the
+     exact misalignment this rule exists to prevent.
+
+   The test: in a lattice with a core card beside a slang card, both track chips and both titles share one
+   left edge.
    **The strip has no `margin-bottom` in either track.** The gap below it is owned entirely by the title's
    `margin-top`. Margins do not collapse inside a flex column, so giving the strip a bottom margin *and*
    the title a top margin would put 32px under a slang strip and 16px under a core strip — the two tracks
@@ -550,7 +633,7 @@ only `border-right` and `border-bottom` (§6).
 | State | Change |
 |---|---|
 | Hover | Fill → `--color-surface-hover`; border → `--color-line-strong`; title → `--color-acid` (14.2:1). No transform, no scale, no lift. |
-| Focus-visible | `outline: 2px solid var(--color-focus); outline-offset: 2px`. In a lattice, `outline-offset: -2px` so the ring does not clip against neighbours, plus `position: relative; z-index: 3`. The inset ring lands on the card's own fill, which is `--color-surface-raised` (15.3:1) or `--color-surface` when locked (16.2:1) — both dark, so the ring stays `--color-focus` and never flips. Cards never take a light fill. A locked card is still focusable and its hatch overlay does put a second colour in the ring's path, but the ring clears both: `--color-focus` over a `--color-hatch` `#3C4046` stripe is **8.7:1** and over the `--color-surface` gap is 16.2:1. No suppression needed — unlike the state-6 hazard bar, the locked hatch is dark and low-contrast, so a light ring survives it. |
+| Focus-visible | `box-shadow: var(--focus-ring)` per §2.6, plus `position: relative; z-index: 3` because cards sit in a gapless lattice. Nothing else, and nothing card-specific. The ring is drawn outside the card, so the slang header strip, the acid `Done` bar and the locked hatch — all of which sit inside it — are irrelevant to focus. |
 | Active | Fill → `--color-surface-sunken`; border stays `--color-line-strong`. |
 | Locked | Fill → `--color-surface`; locked hatch overlay; title → `--color-ink-muted` (6.1:1); acid marker → `--color-ink-muted`; description replaced by `REQUIRES: <prereq term>`; `[LOCKED]` chip; `aria-disabled="true"`; `cursor: not-allowed`; no hover response. |
 | Done | `status-done` chip; a 3px `--color-acid` bar flush to the card's left inner edge, full height. |
@@ -565,10 +648,9 @@ Shared across all variants and sizes:
 - `white-space: nowrap; cursor: pointer; text-decoration: none;`
 - `transition: background-color 80ms linear, border-color 80ms linear, color 80ms linear;`
   Never `transition: all`.
-- Focus-visible on every variant and state: `outline: 2px solid var(--color-focus); outline-offset: 2px`.
-  Buttons always use `--color-focus`, including `primary` in its acid-filled default state: the `+2px`
-  offset means the ring is painted on the page ground behind the button (16.2:1), never on the acid itself.
-  Buttons are never placed in a collapsed stack, so a button ring is never inset and never flips (§2.6).
+- Focus-visible on every variant and state: `box-shadow: var(--focus-ring)` (§2.6). Identical on `primary`
+  in its acid-filled default state — the ring sits outside the button, and its inner dark stroke reads
+  against the acid edge (16.7:1) while the outer light stroke reads against the page ground (16.2:1).
 - Disabled never uses `opacity`.
 - Optional trailing glyph is ASCII or a mono-covered arrow: `→`, `>`, `↗`.
 
@@ -589,7 +671,7 @@ the house move.
 |---|---|---|---|---|
 | Default | `--color-acid` | 2px `--color-acid` | `--color-ink-inverse` | 16.7 |
 | Hover | `--color-surface` | 2px `--color-acid` | `--color-acid` | 16.7 |
-| Focus-visible | unchanged from current state | unchanged | unchanged | + `--color-focus` ring |
+| Focus-visible | unchanged from current state | unchanged | unchanged | + `--focus-ring` (§2.6) |
 | Active | `--color-acid-dim` | 2px `--color-acid-dim` | `--color-ink-inverse` | 10.4 |
 | Disabled | `--color-surface-raised` | 2px `--color-line-soft` | `--color-line` | 3.7 (exempt) |
 
@@ -651,7 +733,7 @@ Surrounding parts:
 | State | Change |
 |---|---|
 | Hover | Border → `--color-line-strong` (7.5:1) |
-| Focus-visible | Border → 1px `--color-acid`; plus `outline: 2px solid var(--color-focus); outline-offset: 2px` |
+| Focus-visible | Border → 1px `--color-acid`; plus `box-shadow: var(--focus-ring)` (§2.6) |
 | Filled | No visual change. Do not float the label. |
 | Error | Border → 2px `--color-ink`; error message shown; `aria-invalid="true"`; `aria-describedby` points at the message |
 | Disabled | Fill `--color-surface-raised`; text `--color-line` (3.7, exempt); border 1px `--color-line-soft`; `cursor: not-allowed` |
@@ -721,7 +803,8 @@ Each option is `position: relative` so the active one can paint its border over 
 | Focus-visible | `3` |
 | Selected, correct, wrong, missed answer | `2` |
 
-Focus outranks everything so the ring is never clipped by a neighbour.
+Focus outranks everything, so a focused option and its outward ring paint above both neighbours in the
+collapsed stack rather than under them (step 2 of the §2.6 procedure).
 
 | Property | Value |
 |---|---|
@@ -741,13 +824,12 @@ Focus outranks everything so the ring is never clipped by a neighbour.
   `--color-ink-muted` (5.7:1). This doubles as the keyboard shortcut hint — pressing `A`–`D` selects.
 
   **The key cell never has a background of its own. `background: transparent` in every one of the eight
-  states — it always shows the option's fill.** Only the glyph colour and the `border-right` change. This
-  is a hard rule, and it exists for a specific reason: the cell is full height and sits on the left edge,
-  so an independent fill would be crossed by the entire left segment of the focus ring plus the first 44px
-  of its top and bottom segments. An earlier draft gave the cell its own fill in states 4, 5 and 6, which
-  put a `#E8EAED` ring over a `#CCFF00` cell (1.03:1) and a `#0B0C0E` ring over a `#0B0C0E` cell (1.00:1 —
-  the identical hex). One fill per option is what makes the ring rule below decidable at all. Do not
-  reintroduce a second fill here to make the glyph "pop"; the glyph colour is doing that job.
+  states — it always shows the option's fill.** Across all eight states the only thing that changes is the
+  glyph colour; the `border-right` is a fixed `1px solid var(--color-line)` throughout and never varies.
+  This is now a coherence rule rather than an accessibility one — since §2.6 the focus ring is drawn
+  entirely outside the option and cannot cross this cell, so a fill here would no longer break focus. It
+  stays transparent because one fill per option is simpler to reason about and the glyph colour already
+  carries the state.
 - **Column 2 is a single grid cell containing a flex row**, not two grid children — the option's grid is
   `44px 1fr` and has no third track, so a separately-placed result label would auto-place onto a new row
   underneath instead of sitting beside the text. That cell is
@@ -763,63 +845,20 @@ of them** — an option can be focused while correct, wrong, selected, or idle.
 |---|---|---|---|---|---|---|
 | 1 | Idle | `--color-surface-raised` | `--color-line` | `--color-ink` 15.3 | `--color-ink-muted` 5.7 | — |
 | 2 | Hover (pre-submit) | `--color-surface-hover` | `--color-line-strong` | `--color-ink` 13.9 | `--color-acid` 14.2 | — |
-| 3 | Focus-visible *(modifier)* | unchanged | unchanged | unchanged | unchanged | see the focus rule below |
+| 3 | Focus-visible *(modifier)* | unchanged | unchanged | unchanged | unchanged | adds `--focus-ring` (§2.6); changes nothing else |
 | 4 | Selected (pre-submit) | `--color-acid-deep` | `--color-acid` | `--color-ink` 7.7 | `A`–`D` in `--color-acid` 7.9 | — |
 | 5 | Correct | `--color-acid` | `--color-acid` | `--color-ink-inverse` 16.7 | `[OK]` in `--color-ink-inverse` 16.7 | `CORRECT` in `--color-ink-inverse` |
 | 6 | Wrong (the one picked) | `--color-ink` | `--color-ink` | `--color-ink-inverse` 16.2 | `[X]` in `--color-ink-inverse` 16.2 | `WRONG` in `--color-ink-inverse` |
 | 7 | Missed answer | `--color-surface` | `--color-acid` | `--color-acid` 16.7 | `>` in `--color-acid` | `ANSWER` in `--color-acid` |
 | 8 | Inert (unpicked, post-submit) | `--color-surface` | `--color-line-soft` | `--color-ink-muted` 6.1 | `--color-ink-muted` 6.1 | — |
 
-**Focus ring on a quiz option — read this carefully.**
+**Focus on a quiz option.** `box-shadow: var(--focus-ring)`, plus the `position: relative; z-index: 3`
+already in the table above. That is the whole specification — see §2.6.
 
-The ring is drawn *inside* the option (`outline: 2px solid; outline-offset: -4px`) because the options form
-a collapsed stack and an outward ring would be painted over by the neighbour below.
-
-The offset is `-4px`, not `-2px`. At `-2px` the outline lands exactly on top of the option's own 2px border
-and replaces it visually, so a focused option in state 4, 5, 6 or 7 would lose the acid or ink border that
-tells the user what the option *is*. At `-4px` the ring sits just inside the border and both are legible —
-border says "this is correct / wrong / selected", ring says "this is where your keyboard is".
-
-An inset ring therefore sits **on the option's own fill**, and states 5 and 6 have light fills. A `#E8EAED`
-ring on the `#E8EAED` wrong-answer fill is 1.0:1 — invisible. These options remain keyboard-reachable after
-submit, so this is a real defect, not a theoretical one.
-
-**Precondition: an option has exactly one fill.** The table below is only decidable because the key cell is
-transparent in every state and the hazard bar is suppressed under focus (both specified above and below).
-If any child of the option ever gets its own background, the ring crosses two colours and this rule breaks.
-That is the rule to protect.
-
-**The ring colour is therefore chosen by the lightness of the fill it is drawn on:**
-
-| Option state | Fill | Ring colour | Ratio |
-|---|---|---|---|
-| 1 Idle | `--color-surface-raised` | `--color-focus` `#E8EAED` | 15.3 |
-| 2 Hover | `--color-surface-hover` | `--color-focus` | 13.9 |
-| 4 Selected | `--color-acid-deep` | `--color-focus` | 7.7 |
-| 5 **Correct** | `--color-acid` | **`--color-ink-inverse` `#0B0C0E`** | **16.7** |
-| 6 **Wrong** | `--color-ink` | **`--color-ink-inverse` `#0B0C0E`** | **16.2** |
-| 7 Missed answer | `--color-surface` | `--color-focus` | 16.2 |
-| 8 Inert | `--color-surface` | `--color-focus` | 16.2 |
-
-No new colour token and no new hue: the dark ring reuses `--color-ink-inverse`, and both flipped pairs are
-already measured in §2.5. Implement as a single rule plus two overrides keyed off the state class — do not
-compute it at runtime.
-
-**The hazard bar is suppressed while the option has focus.** In state 6 the 6px hazard bar sits flush to
-the option's inner bottom edge, and the ring at `-4px` passes straight through it. Because the bar's stripes
-are `--color-surface` `#0B0C0E` — the same hex as the state-6 ring — the ring's bottom segment would dash
-in and out along the striped run. There is no third dark value to give it, and thinning the bar below 3px
-destroys the hatch. So: `.option--wrong:focus-visible` hides the hazard bar for as long as focus is on it.
-
-That trade is safe. The bar is redundant reinforcement, not the signal — state 6 still carries the fill
-inversion to `--color-ink`, the 2px `--color-ink` border, the `[X]` glyph, and the word `WRONG`. It is the
-same reasoning that lets the shake drop under `prefers-reduced-motion` (§8). Focus is transient; the moment
-focus leaves, the bar returns.
-
-The same principle governs the whole system: **the focus ring is `--color-focus` when it lands on a dark
-surface and `--color-ink-inverse` when it lands on a light fill (`--color-acid` or `--color-ink`).** For
-buttons and cards the ring is offset *outward* onto the page ground, which is always dark, so those always
-use `--color-focus` — only inset rings ever flip.
+Nothing here is option-specific, and that is the point. The ring is drawn outside the option, so the fill,
+the key cell, the 2px border and the state-6 hazard bar are all irrelevant to it, in every one of the eight
+states. Where the ring overlaps the neighbouring option in the collapsed stack — including a neighbour
+filled with acid or ink — the inner dark stroke carries it at 16.7:1 and 16.2:1 respectively.
 
 State 6 additionally carries the hazard bar: a 6px-tall, full-width element flush to the option's bottom
 inner edge, painted `repeating-linear-gradient(45deg, var(--color-surface) 0 3px, transparent 3px 6px)`
@@ -859,8 +898,10 @@ One question per screen. At a 900px viewport a four-option question must fit wit
 ### 7.6 Link
 
 Three variants. Every variant is `border-radius: 0`, has no background on rest, and transitions
-`color, text-decoration-color 80ms linear`. Focus on all three is the standard outward ring:
-`outline: 2px solid var(--color-focus); outline-offset: 2px` (dark ground, so never flips — §2.6).
+`color, text-decoration-color 80ms linear`. Focus on all three is `box-shadow: var(--focus-ring)` (§2.6),
+with no variant-specific handling. Where links are laid out as a gapless lattice — the prev/next bar
+(§9.3) and the results-screen map (§9.4) — they also take `position: relative; z-index: 3` per step 2 of
+the §2.6 procedure, so the ring paints over the neighbouring cell rather than under it.
 
 **`link` — the default. Any link sitting inside a run of prose.**
 
@@ -868,7 +909,7 @@ Three variants. Every variant is `border-radius: 0`, has no background on rest, 
 |---|---|---|---|---|
 | Default | `--color-acid` | 1px solid `--color-acid`, `text-underline-offset: 3px`, `text-decoration-thickness: 1px` | none | 16.7 |
 | Hover | `--color-acid` | `text-decoration-thickness: 2px` | `--color-acid-wash`, with 2px horizontal bleed via `padding: 0 2px; margin: 0 -2px` | 14.3 |
-| Focus-visible | unchanged | unchanged | unchanged | + `--color-focus` ring |
+| Focus-visible | unchanged | unchanged | unchanged | + `--focus-ring` (§2.6) |
 | Active | `--color-acid-dim` | 2px `--color-acid-dim` | `--color-acid-wash` | 9.0 on wash |
 | Visited | `--color-acid-dim` | 1px `--color-acid-dim` | none | 10.4 |
 
@@ -997,7 +1038,7 @@ Then these specific substitutions, which the global rule cannot express:
 |---|---|
 | Ticker scrolls | Does not translate at all. Renders as a static single row, `overflow: hidden`, animation removed (not just shortened). |
 | Caret blinks | Renders solid, permanently visible. |
-| Wrong answer shakes | The shake is simply removed. **No substitute is added, and none is needed** — state 6 already carries four permanent non-motion signals: the full fill inversion to `--color-ink`, the 2px `--color-ink` border, the `[X]` glyph, and the word `WRONG` — plus the 6px hazard bar whenever the option is not focused. The shake was always redundant emphasis, never the signal. Do not compensate by thickening the border: option borders are a constant 2px so the stack cannot shift (§7.5), and the hazard bar is capped at 6px by §6. |
+| Wrong answer shakes | The shake is simply removed. **No substitute is added, and none is needed** — state 6 already carries five non-motion signals: the full fill inversion to `--color-ink`, the 2px `--color-ink` border, the `[X]` glyph, the word `WRONG`, and the 6px hazard bar. The shake was always redundant emphasis, never the signal. Do not compensate by thickening the border: option borders are a constant 2px so the stack cannot shift (§7.5), and the hazard bar is capped at 6px by §6. |
 | Explanation wipes in | Appears instantly, fully drawn. |
 | Unlock hatch wipes out | Hatch is removed instantly. |
 | Games use particles, trails, screen shake | All removed. Timed mechanics keep running; decorative motion does not. |
@@ -1168,8 +1209,15 @@ A focused mode. The global nav is a distraction here and gets removed.
   - Completed: 3px `--color-acid` bar on the node's left edge.
 - **Edges** are 1px `--color-line` straight orthogonal polylines — horizontal and vertical segments with
   square corners. No curves, no beziers, no arrowheads other than a 6px solid triangle at the target.
-- **Hover / focus on a node**: node border → 2px `--color-acid`; connected edges → `--color-acid`;
-  all unconnected nodes' labels → `--color-ink-muted`. 80ms linear.
+- **Hover / focus / selected on a node**: `box-shadow: var(--focus-ring)` (§2.6) — the same two-tone ring
+  the rest of the site uses, on hover as well as focus. Connected edges → `--color-acid`; all unconnected
+  nodes' labels → `--color-ink-muted`. 80ms linear.
+  **The node border does not change colour to indicate hover or focus.** A slang node is filled
+  `--color-acid`, so a 2px `--color-acid` border on it is 1:1 against its own fill — the node would simply
+  grow 2px with no visible highlight. This is the same palette property described in §2.6, and the ring is
+  the same answer: it is drawn outside the node, so it works identically on a core node and a slang node.
+  Nodes are absolutely positioned and do not touch, so no `z-index` is needed; the SVG or container must
+  not clip (step 3 of the §2.6 procedure).
 - **Selecting a node** opens a right-hand panel, 360px wide at `lg`+ (full-width sheet below), using the
   Card spec, with a primary `md` `OPEN LESSON →`.
 - The graph is keyboard-navigable: arrow keys move between connected nodes, `Enter` opens. A visually
@@ -1238,18 +1286,18 @@ Both are optional decoration. Neither may carry information, and both must sit u
 
 - Every text/background pair in §2.5 clears AA. Measure before merge.
 - No state is signalled by colour alone. Every state carries a word or an ASCII glyph.
-- Focus is always visible, on every fill: `2px solid` at `+2px` offset normally; inset inside
-  collapsed-border stacks, at `-2px` for lattice cards (1px border) and `-4px` for quiz options (2px
-  border). The ring is `--color-focus` on dark surfaces and `--color-ink-inverse` on light fills
-  (`--color-acid`, `--color-ink`) — see §2.6 and the quiz-option focus table in §7.5. A single fixed ring
-  colour is **not** acceptable here, because an inset `#E8EAED` ring on the `#E8EAED` wrong-answer fill is
-  1.0:1. Never `outline: none` without a replacement of equal or greater visibility.
-- **Any element that takes an inset focus ring must have exactly one background colour across the whole
-  area the ring crosses.** The ring colour is chosen from that one fill; if a child inside the ring's path
-  paints its own background, part of the ring is drawn on an unaccounted colour and the ratio above is no
-  longer the ratio the user sees. This is why the quiz key cell is transparent in all eight states and why
-  the state-6 hazard bar is suppressed under focus (§7.5). Check this whenever a new inset-ring component
-  is added.
+- Focus is always visible, on every component, with no per-component reasoning:
+  `box-shadow: var(--focus-ring)` — a two-tone ring drawn entirely outside the element, specified once in
+  §2.6. It is two-tone because `--color-acid` (luminance 0.8436) is **brighter** than `--color-ink`
+  (0.8212), so no single light ring colour contrasts with both acid and the dark grounds. The two strokes
+  are 16.2:1 against each other, so the indicator is visible regardless of what surrounds it.
+  Never `outline: none` without this replacement.
+- **Never use a negative `outline-offset`, and never pick a focus colour from an element's fill.** Both
+  were tried in earlier drafts and both failed, in three different components, for the same reason. An
+  inset ring crosses the element's children; an outward two-tone ring crosses nothing.
+- **A colour change alone is not a valid hover or selection indicator when the element may be acid-filled.**
+  A `--color-acid` border on a `--color-acid` fill is 1:1. Graph nodes (§9.5) use the ring for this reason.
+  Any new component with a light fill must be checked the same way.
 - Target size: interactive targets are at least 44 × 44px, or 24 × 24px with 24px of clear spacing.
   The quiz key cell is exactly 44px for this reason.
 - `opacity` is never used to express a disabled or inactive state.
