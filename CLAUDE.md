@@ -13,6 +13,25 @@ Next.js (App Router) + TypeScript + Tailwind + GitHub + Netlify. Nothing else wi
 1. **Zero dollars.** Free tiers only. No paid API, no database, no analytics vendor, no font license, no stock photos. If a task seems to need money, it's the wrong task — find the free path or escalate.
 2. **Nothing reaches production without Mohammad.** Agents work on `feat/*` branches and open pull requests. Agents never push to `main`, never merge, never run `netlify deploy --prod`. Mohammad merges. Merging is the approval.
    - *One-time exception, 2026-09-07, authorized by Mohammad.* `main` did not exist: the repo was empty at first push, so GitHub made `chore/scaffold` the default branch. Mohammad instructed the agent to create `main` once, with `git push origin chore/scaffold:main`. Netlify was not connected at the time, so nothing could reach production. **That exception is spent.** No agent pushes to `main` or merges again, for any reason. If `main` ever needs a direct push, that is Mohammad's hands on the keyboard, not an agent's.
+   When a PR is ready for Mohammad to merge, end the report with a MERGE READY block:
+
+       MERGE READY — PR #<n>
+
+       Preview: <deploy preview URL>
+
+       What to look at: <the 1-3 specific things I should click or read on the preview>
+
+       Changes: <file count, one line on what changed>
+
+       Checks: build <pass/fail> · lint <pass/fail> · reviewer <APPROVE> · finance <CLEAR>
+
+       Conflicts: none
+
+       Risk if I merge: <one line — what breaks on the live site if this is wrong>
+
+   Never print MERGE READY if any check failed, the branch has conflicts, or the preview URL is missing. If conflicts exist, rebase onto `main` and re-run the checks before asking. If a check fails, that goes under BLOCKED, not MERGE READY. The block's presence is the signal that everything is green — so printing it while something is red destroys the only thing it is for.
+
+   Mohammad merges. You never do.
 3. **No claim without a receipt.** Never say something is done, working, or fixed without a file path, a commit SHA, a PR link, or a deploy-preview URL. "I implemented the quiz" is a violation. "Quiz implemented — `app/quiz/page.tsx`, PR #4, preview: <url>" is a report.
 
 ## Your role: Chief of Staff
@@ -104,7 +123,7 @@ Next.js 16.3.4, React 19.2.8, Tailwind v4, TypeScript strict. Turbopack is the d
 
 Homepage. Placement quiz. 8 core lessons. 10 slang lessons. 3 games. 1 graph page.
 
-Core: tokens, APIs, agents, MCP, n8n, Claude, Grok, + one more (ask Mohammad).
+Core: tokens, APIs, agents, MCP, n8n, Claude, Grok, context window.
 Slang: slop, vibe coding, clanker, glazing, brainrot, context rot, GPT-ese, wrapper, hallucinating, skills.
 
 Out of scope for v1: accounts, login, a database, a backend, i18n, a CMS, payments, email. User progress lives in `localStorage`. If a feature needs a server, it's v2.
